@@ -1,0 +1,112 @@
+﻿2025-12-03 10:59:03,858 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-12-03 10:59:03,871 INFO sqlalchemy.engine.Engine SELECT users.id, users.email, users.hashed_password, users.full_name, users.organization_id, users.role, users.is_active, users.is_verified, users.created_at, users.updated_at, users.last_login 
+FROM users
+2025-12-03 10:59:03,871 INFO sqlalchemy.engine.Engine [generated in 0.00020s] ()
+USERS:
+============================================================
+Email: test@example.com
+  User ID: 5f1d4ae3-2a69-4548-85e4-23b96f808f7d
+  Org ID:  58784f66-2502-40d9-a92d-fd3fc027af32
+
+Email: palash32@users.noreply.github.com
+  User ID: 813729b9-d880-44d5-b460-a3b998e2c9f0
+  Org ID:  302f44b7-e2f4-49c8-872e-a6905cc7880b
+
+Email: dev@test.com
+  User ID: d7f44f57-11ba-435a-85fe-e92f6d32177d
+  Org ID:  a2292138-7c5d-48e4-9478-67f9b39aaafc
+
+2025-12-03 10:59:03,874 INFO sqlalchemy.engine.Engine SELECT organizations.id, organizations.name, organizations.subdomain, organizations.subscription_tier, organizations.developer_count, organizations.stripe_customer_id, organizations.stripe_subscription_id, organizations.created_at, organizations.updated_at 
+FROM organizations
+2025-12-03 10:59:03,874 INFO sqlalchemy.engine.Engine [generated in 0.00018s] ()
+
+ORGANIZATIONS:
+============================================================
+Name: testuser's Workspace
+  Org ID: 58784f66-2502-40d9-a92d-fd3fc027af32
+
+Name: Test Org
+  Org ID: f0f1e2ba-aab1-4ae6-a4ef-a348c2cb76f2
+
+Name: palash32's Workspace
+  Org ID: 302f44b7-e2f4-49c8-872e-a6905cc7880b
+
+Name: Development Organization
+  Org ID: a2292138-7c5d-48e4-9478-67f9b39aaafc
+
+2025-12-03 10:59:03,876 INFO sqlalchemy.engine.Engine SELECT repositories.id, repositories.organization_id, repositories.name, repositories.full_name, repositories.git_provider, repositories.repo_url, repositories.default_branch, repositories.provider_repo_id, repositories.access_token_encrypted, repositories.scan_status, repositories.last_scanned, repositories.last_commit_sha, repositories.scan_error_message, repositories.api_count, repositories.auto_scan_enabled, repositories.scan_schedule, repositories.created_at, repositories.updated_at 
+FROM repositories
+2025-12-03 10:59:03,876 INFO sqlalchemy.engine.Engine [generated in 0.00020s] ()
+
+REPOSITORIES:
+============================================================
+fastapi/fastapi-hello-world
+  Repo ID: 6204b85f-b05f-439e-a61a-168fc45b0e4a
+  Org ID:  a2292138-7c5d-48e4-9478-67f9b39aaafc
+2025-12-03 10:59:03,879 INFO sqlalchemy.engine.Engine SELECT organizations.id, organizations.name, organizations.subdomain, organizations.subscription_tier, organizations.developer_count, organizations.stripe_customer_id, organizations.stripe_subscription_id, organizations.created_at, organizations.updated_at 
+FROM organizations 
+WHERE organizations.id = ?
+2025-12-03 10:59:03,879 INFO sqlalchemy.engine.Engine [generated in 0.00013s] ('a22921387c5d48e4947867f9b39aaafc',)
+  Org Name: Development Organization
+
+encode/starlette
+  Repo ID: b1e1d058-6ffe-4192-a063-1785812a87ca
+  Org ID:  a2292138-7c5d-48e4-9478-67f9b39aaafc
+2025-12-03 10:59:03,880 INFO sqlalchemy.engine.Engine SELECT organizations.id, organizations.name, organizations.subdomain, organizations.subscription_tier, organizations.developer_count, organizations.stripe_customer_id, organizations.stripe_subscription_id, organizations.created_at, organizations.updated_at 
+FROM organizations 
+WHERE organizations.id = ?
+2025-12-03 10:59:03,880 INFO sqlalchemy.engine.Engine [cached since 0.001251s ago] ('a22921387c5d48e4947867f9b39aaafc',)
+  Org Name: Development Organization
+
+palash32/Blogging-App
+  Repo ID: 8e5b6ff5-38ef-46f5-8a68-e22d44515415
+  Org ID:  a2292138-7c5d-48e4-9478-67f9b39aaafc
+2025-12-03 10:59:03,881 INFO sqlalchemy.engine.Engine SELECT organizations.id, organizations.name, organizations.subdomain, organizations.subscription_tier, organizations.developer_count, organizations.stripe_customer_id, organizations.stripe_subscription_id, organizations.created_at, organizations.updated_at 
+FROM organizations 
+WHERE organizations.id = ?
+2025-12-03 10:59:03,881 INFO sqlalchemy.engine.Engine [cached since 0.002066s ago] ('a22921387c5d48e4947867f9b39aaafc',)
+  Org Name: Development Organization
+
+palash32/telegram-clone
+  Repo ID: 2dbf532f-831f-4b3f-8b65-209608958f84
+  Org ID:  a2292138-7c5d-48e4-9478-67f9b39aaafc
+2025-12-03 10:59:03,882 INFO sqlalchemy.engine.Engine SELECT organizations.id, organizations.name, organizations.subdomain, organizations.subscription_tier, organizations.developer_count, organizations.stripe_customer_id, organizations.stripe_subscription_id, organizations.created_at, organizations.updated_at 
+FROM organizations 
+WHERE organizations.id = ?
+2025-12-03 10:59:03,882 INFO sqlalchemy.engine.Engine [cached since 0.003062s ago] ('a22921387c5d48e4947867f9b39aaafc',)
+  Org Name: Development Organization
+
+palash32/smart_dustbin
+  Repo ID: 9c3d9986-b21c-4521-8cd7-8b68885e8330
+  Org ID:  a2292138-7c5d-48e4-9478-67f9b39aaafc
+2025-12-03 10:59:03,883 INFO sqlalchemy.engine.Engine SELECT organizations.id, organizations.name, organizations.subdomain, organizations.subscription_tier, organizations.developer_count, organizations.stripe_customer_id, organizations.stripe_subscription_id, organizations.created_at, organizations.updated_at 
+FROM organizations 
+WHERE organizations.id = ?
+2025-12-03 10:59:03,883 INFO sqlalchemy.engine.Engine [cached since 0.003937s ago] ('a22921387c5d48e4947867f9b39aaafc',)
+  Org Name: Development Organization
+
+octocat/Spoon-Knife
+  Repo ID: 96687b43-0bcb-4a3a-9193-d0f78e5e42c3
+  Org ID:  a2292138-7c5d-48e4-9478-67f9b39aaafc
+2025-12-03 10:59:03,886 INFO sqlalchemy.engine.Engine SELECT organizations.id, organizations.name, organizations.subdomain, organizations.subscription_tier, organizations.developer_count, organizations.stripe_customer_id, organizations.stripe_subscription_id, organizations.created_at, organizations.updated_at 
+FROM organizations 
+WHERE organizations.id = ?
+2025-12-03 10:59:03,886 INFO sqlalchemy.engine.Engine [cached since 0.007488s ago] ('a22921387c5d48e4947867f9b39aaafc',)
+  Org Name: Development Organization
+
+palash32/Payment_Gateway_Integration
+  Repo ID: 041343e0-4519-4294-91d6-052beb389ede
+  Org ID:  a2292138-7c5d-48e4-9478-67f9b39aaafc
+2025-12-03 10:59:03,888 INFO sqlalchemy.engine.Engine SELECT organizations.id, organizations.name, organizations.subdomain, organizations.subscription_tier, organizations.developer_count, organizations.stripe_customer_id, organizations.stripe_subscription_id, organizations.created_at, organizations.updated_at 
+FROM organizations 
+WHERE organizations.id = ?
+2025-12-03 10:59:03,888 INFO sqlalchemy.engine.Engine [cached since 0.009622s ago] ('a22921387c5d48e4947867f9b39aaafc',)
+  Org Name: Development Organization
+
+
+SUMMARY:
+============================================================
+Total Users: 3
+Total Organizations: 4
+Total Repositories: 7
+2025-12-03 10:59:03,889 INFO sqlalchemy.engine.Engine ROLLBACK
