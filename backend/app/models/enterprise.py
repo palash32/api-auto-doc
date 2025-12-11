@@ -1,6 +1,7 @@
 """Enterprise features models for self-hosted, SLA, support, and integrations."""
 
 from sqlalchemy import Column, String, Integer, Float, Boolean, ForeignKey, DateTime, Text, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from datetime import datetime
@@ -30,8 +31,8 @@ class EnterpriseConfig(Base):
     """
     __tablename__ = "enterprise_configs"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True)
     
     # Deployment
     deployment_type = Column(String(20), default="cloud")  # cloud, self_hosted, hybrid
@@ -73,8 +74,8 @@ class CustomIntegration(Base):
     """
     __tablename__ = "custom_integrations"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     
     # Integration details
     name = Column(String(100), nullable=False)
@@ -110,8 +111,8 @@ class SupportTicket(Base):
     """
     __tablename__ = "support_tickets"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
     # Ticket details
@@ -153,8 +154,8 @@ class SLAMetric(Base):
     """
     __tablename__ = "sla_metrics"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     
     # Period
     period_start = Column(DateTime, nullable=False)

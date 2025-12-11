@@ -1,6 +1,7 @@
 """Security and compliance models for audit logging, SSO, and access control."""
 
 from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, DateTime, Text, JSON, Index
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from datetime import datetime
@@ -53,8 +54,8 @@ class AuditLog(Base):
     """
     __tablename__ = "audit_logs"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     
     # Who
     user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
@@ -97,8 +98,8 @@ class SSOConfig(Base):
     """
     __tablename__ = "sso_configs"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True)
     
     # SSO type
     provider_type = Column(String(20), nullable=False)  # saml, oidc, azure_ad, okta, google
@@ -141,8 +142,8 @@ class IPWhitelist(Base):
     """
     __tablename__ = "ip_whitelists"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     
     # IP rule
     ip_address = Column(String(45), nullable=True)  # Single IP
@@ -171,8 +172,8 @@ class SecuritySettings(Base):
     """
     __tablename__ = "security_settings"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True)
     
     # Password policies
     min_password_length = Column(Integer, default=8)
@@ -216,8 +217,8 @@ class OrganizationAPIKey(Base):
     """
     __tablename__ = "org_api_keys"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Key details

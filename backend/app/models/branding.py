@@ -1,6 +1,7 @@
 """Custom branding models for white-label and customization features."""
 
 from sqlalchemy import Column, String, Boolean, ForeignKey, DateTime, Text, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from datetime import datetime
@@ -15,8 +16,8 @@ class OrganizationBranding(Base):
     """
     __tablename__ = "organization_branding"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True)
     
     # Logo settings
     logo_url = Column(String(500), nullable=True)  # Custom logo URL
@@ -72,8 +73,8 @@ class CustomDomain(Base):
     """
     __tablename__ = "custom_domains"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     
     # Domain settings
     domain = Column(String(255), nullable=False, unique=True)  # e.g., docs.acme.com

@@ -33,9 +33,9 @@ class TeamMember(Base):
     """
     __tablename__ = "team_members"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     
     # Role and permissions
     role = Column(String(20), default=TeamRole.VIEWER.value, nullable=False)
@@ -74,8 +74,8 @@ class Workspace(Base):
     """
     __tablename__ = "workspaces"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     
     # Workspace details
     name = Column(String(100), nullable=False)
@@ -105,7 +105,7 @@ class WorkspaceMember(Base):
     """
     __tablename__ = "workspace_members"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     workspace_id = Column(String(36), ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
@@ -127,7 +127,7 @@ class EndpointComment(Base):
     """
     __tablename__ = "endpoint_comments"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
@@ -163,7 +163,7 @@ class ChangeRequest(Base):
     """
     __tablename__ = "change_requests"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False)
     author_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
@@ -199,8 +199,8 @@ class ActivityLog(Base):
     """
     __tablename__ = "activity_logs"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
     # Activity details

@@ -1,6 +1,7 @@
 """Health monitoring models for endpoint status and alerts."""
 
 from sqlalchemy import Column, String, Integer, Float, Boolean, ForeignKey, DateTime, Text, JSON, Enum
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from datetime import datetime
@@ -39,7 +40,7 @@ class HealthCheck(Base):
     """
     __tablename__ = "health_checks"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=True)
     repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
@@ -75,7 +76,7 @@ class EndpointHealthSummary(Base):
     """
     __tablename__ = "endpoint_health_summaries"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False, unique=True)
     
     # Current status
@@ -115,8 +116,8 @@ class HealthAlert(Base):
     """
     __tablename__ = "health_alerts"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="SET NULL"), nullable=True)
     
     # Alert details
@@ -150,8 +151,8 @@ class AlertConfig(Base):
     """
     __tablename__ = "alert_configs"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=True)  # Null = org-wide
     
     # Channel settings
@@ -186,7 +187,7 @@ class HealthCheckSchedule(Base):
     """
     __tablename__ = "health_check_schedules"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
     # Schedule

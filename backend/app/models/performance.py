@@ -1,6 +1,7 @@
 """Performance and scalability models for CDN, caching, rate limiting, and queues."""
 
 from sqlalchemy import Column, String, Integer, Float, Boolean, ForeignKey, DateTime, Text, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from datetime import datetime
@@ -31,8 +32,8 @@ class CDNConfig(Base):
     """
     __tablename__ = "cdn_configs"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, unique=True)
     
     # CDN settings
     provider = Column(String(50), default="cloudflare")  # cloudflare, aws_cloudfront, fastly
@@ -62,7 +63,7 @@ class CacheEntry(Base):
     """
     __tablename__ = "cache_entries"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     
     # Cache key
     cache_key = Column(String(500), nullable=False, unique=True, index=True)
@@ -89,7 +90,7 @@ class RateLimitConfig(Base):
     """
     __tablename__ = "rate_limit_configs"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     
     # Tier
     tier = Column(String(20), nullable=False, unique=True)  # free, starter, pro, enterprise
@@ -119,8 +120,8 @@ class RateLimitLog(Base):
     """
     __tablename__ = "rate_limit_logs"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     
     # Window
     window_type = Column(String(20), nullable=False)  # minute, hour, day
@@ -139,8 +140,8 @@ class BuildQueue(Base):
     """
     __tablename__ = "build_queue"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
     # Job details
@@ -180,7 +181,7 @@ class PerformanceMetric(Base):
     """
     __tablename__ = "performance_metrics"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     
     # Metric details
     metric_name = Column(String(100), nullable=False)  # api_latency, db_query_time, cache_hit_rate

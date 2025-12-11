@@ -1,6 +1,7 @@
 """CI/CD integration models for GitHub Actions, GitLab CI, Jenkins, and PR bots."""
 
 from sqlalchemy import Column, String, Integer, Float, Boolean, ForeignKey, DateTime, Text, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from datetime import datetime
@@ -33,7 +34,7 @@ class CIPipeline(Base):
     """
     __tablename__ = "ci_pipelines"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
     # Provider
@@ -72,7 +73,7 @@ class CIBuild(Base):
     """
     __tablename__ = "ci_builds"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     pipeline_id = Column(String(36), ForeignKey("ci_pipelines.id", ondelete="CASCADE"), nullable=False)
     repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
@@ -117,7 +118,7 @@ class PRComment(Base):
     """
     __tablename__ = "pr_comments"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     build_id = Column(String(36), ForeignKey("ci_builds.id", ondelete="SET NULL"), nullable=True)
     
@@ -146,7 +147,7 @@ class BuildBadge(Base):
     """
     __tablename__ = "build_badges"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False, unique=True)
     
     # Badge info

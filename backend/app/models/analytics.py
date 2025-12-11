@@ -1,6 +1,7 @@
 """Analytics models for tracking API documentation usage and health."""
 
 from sqlalchemy import Column, String, Integer, Float, Boolean, ForeignKey, DateTime, Text, JSON, Date
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from datetime import datetime, date
@@ -15,7 +16,7 @@ class EndpointView(Base):
     """
     __tablename__ = "endpoint_views"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False)
     
     # Viewer info (anonymized)
@@ -41,7 +42,7 @@ class EndpointUsageStats(Base):
     """
     __tablename__ = "endpoint_usage_stats"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False)
     date = Column(Date, nullable=False)
     
@@ -68,7 +69,7 @@ class DocumentationHealth(Base):
     """
     __tablename__ = "documentation_health"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     calculated_at = Column(DateTime, default=datetime.utcnow)
     
@@ -101,7 +102,7 @@ class APILatencyMetric(Base):
     """
     __tablename__ = "api_latency_metrics"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=True)
     
     # Request details
@@ -132,8 +133,8 @@ class AnalyticsSummary(Base):
     """
     __tablename__ = "analytics_summaries"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     date = Column(Date, nullable=False)
     
     # Traffic metrics

@@ -1,6 +1,7 @@
 """Import/Export models for API documentation."""
 
 from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, DateTime, Text, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from datetime import datetime
@@ -35,7 +36,7 @@ class ImportJob(Base):
     """
     __tablename__ = "import_jobs"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
     # Import details
@@ -69,7 +70,7 @@ class ExportJob(Base):
     """
     __tablename__ = "export_jobs"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
     # Export details
@@ -107,8 +108,8 @@ class ExportTemplate(Base):
     """
     __tablename__ = "export_templates"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     
     # Template details
     name = Column(String(100), nullable=False)
