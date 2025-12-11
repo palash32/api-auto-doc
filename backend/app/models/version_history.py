@@ -16,7 +16,7 @@ class APIVersion(Base):
     __tablename__ = "api_versions"
     
     id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
+    repository_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
     # Version identification
     version = Column(String(50), nullable=False)  # e.g., "1.0.0", "2025-01-15"
@@ -46,7 +46,7 @@ class APIVersion(Base):
     
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
-    created_by_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    created_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     
     # Relationships
     repository = relationship("Repository", backref="versions")
@@ -61,8 +61,8 @@ class EndpointChange(Base):
     __tablename__ = "endpoint_changes"
     
     id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    version_id = Column(String(36), ForeignKey("api_versions.id", ondelete="CASCADE"), nullable=False)
-    endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="SET NULL"), nullable=True)
+    version_id = Column(UUID(as_uuid=True), ForeignKey("api_versions.id", ondelete="CASCADE"), nullable=False)
+    endpoint_id = Column(UUID(as_uuid=True), ForeignKey("api_endpoints.id", ondelete="SET NULL"), nullable=True)
     
     # Change type
     change_type = Column(String(20), nullable=False)  # added, modified, removed, deprecated
@@ -99,7 +99,7 @@ class Changelog(Base):
     __tablename__ = "changelogs"
     
     id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    version_id = Column(String(36), ForeignKey("api_versions.id", ondelete="CASCADE"), nullable=False, unique=True)
+    version_id = Column(UUID(as_uuid=True), ForeignKey("api_versions.id", ondelete="CASCADE"), nullable=False, unique=True)
     
     # Changelog content
     content_markdown = Column(Text, nullable=True)  # Markdown formatted changelog
@@ -132,8 +132,8 @@ class VersionBookmark(Base):
     __tablename__ = "version_bookmarks"
     
     id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    version_id = Column(String(36), ForeignKey("api_versions.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    version_id = Column(UUID(as_uuid=True), ForeignKey("api_versions.id", ondelete="CASCADE"), nullable=False)
     
     # Bookmark metadata
     label = Column(String(100), nullable=True)  # Custom label

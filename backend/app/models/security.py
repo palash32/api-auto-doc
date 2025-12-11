@@ -58,7 +58,7 @@ class AuditLog(Base):
     organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     
     # Who
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     user_email = Column(String(255), nullable=True)  # Store email in case user is deleted
     
     # What
@@ -160,7 +160,7 @@ class IPWhitelist(Base):
     
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
-    created_by_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    created_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     
     # Relationships
     organization = relationship("Organization", backref="ip_whitelists")
@@ -219,7 +219,7 @@ class OrganizationAPIKey(Base):
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Key details
     name = Column(String(100), nullable=False)

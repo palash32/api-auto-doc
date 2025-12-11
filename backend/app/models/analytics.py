@@ -17,10 +17,10 @@ class EndpointView(Base):
     __tablename__ = "endpoint_views"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False)
+    endpoint_id = Column(UUID(as_uuid=True), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False)
     
     # Viewer info (anonymized)
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     session_id = Column(String(100), nullable=True)  # Anonymous tracking
     
     # Request context
@@ -43,7 +43,7 @@ class EndpointUsageStats(Base):
     __tablename__ = "endpoint_usage_stats"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False)
+    endpoint_id = Column(UUID(as_uuid=True), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False)
     date = Column(Date, nullable=False)
     
     # View counts
@@ -70,7 +70,7 @@ class DocumentationHealth(Base):
     __tablename__ = "documentation_health"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
+    repository_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     calculated_at = Column(DateTime, default=datetime.utcnow)
     
     # Overall score (0-100)
@@ -103,7 +103,7 @@ class APILatencyMetric(Base):
     __tablename__ = "api_latency_metrics"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=True)
+    endpoint_id = Column(UUID(as_uuid=True), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=True)
     
     # Request details
     url = Column(String(500), nullable=False)
@@ -115,7 +115,7 @@ class APILatencyMetric(Base):
     response_size_bytes = Column(Integer, nullable=True)
     
     # Context
-    tested_by_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    tested_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     tested_at = Column(DateTime, default=datetime.utcnow)
     
     # Error tracking

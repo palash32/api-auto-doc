@@ -35,7 +35,7 @@ class CIPipeline(Base):
     __tablename__ = "ci_pipelines"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
+    repository_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
     # Provider
     provider = Column(String(30), nullable=False)  # github_actions, gitlab_ci, jenkins
@@ -74,8 +74,8 @@ class CIBuild(Base):
     __tablename__ = "ci_builds"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    pipeline_id = Column(String(36), ForeignKey("ci_pipelines.id", ondelete="CASCADE"), nullable=False)
-    repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
+    pipeline_id = Column(UUID(as_uuid=True), ForeignKey("ci_pipelines.id", ondelete="CASCADE"), nullable=False)
+    repository_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
     # Build info
     build_number = Column(Integer, nullable=False)
@@ -119,8 +119,8 @@ class PRComment(Base):
     __tablename__ = "pr_comments"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
-    build_id = Column(String(36), ForeignKey("ci_builds.id", ondelete="SET NULL"), nullable=True)
+    repository_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
+    build_id = Column(UUID(as_uuid=True), ForeignKey("ci_builds.id", ondelete="SET NULL"), nullable=True)
     
     # PR info
     pr_number = Column(Integer, nullable=False)
@@ -148,7 +148,7 @@ class BuildBadge(Base):
     __tablename__ = "build_badges"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False, unique=True)
+    repository_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False, unique=True)
     
     # Badge info
     badge_type = Column(String(20), default="status")  # status, coverage, endpoints

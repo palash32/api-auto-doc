@@ -34,14 +34,14 @@ class TeamMember(Base):
     __tablename__ = "team_members"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     
     # Role and permissions
     role = Column(String(20), default=TeamRole.VIEWER.value, nullable=False)
     
     # Invitation tracking
-    invited_by_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    invited_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     invited_at = Column(DateTime, default=datetime.utcnow)
     accepted_at = Column(DateTime, nullable=True)
     
@@ -91,7 +91,7 @@ class Workspace(Base):
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    created_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     
     # Relationships
     organization = relationship("Organization", backref="workspaces")
@@ -106,8 +106,8 @@ class WorkspaceMember(Base):
     __tablename__ = "workspace_members"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    workspace_id = Column(String(36), ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False)
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    workspace_id = Column(UUID(as_uuid=True), ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Workspace-specific role (override team role if needed)
     role = Column(String(20), nullable=True)  # Null = inherit from team role
@@ -128,21 +128,21 @@ class EndpointComment(Base):
     __tablename__ = "endpoint_comments"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False)
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    endpoint_id = Column(UUID(as_uuid=True), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Comment content
     content = Column(Text, nullable=False)
     
     # Threading support
-    parent_id = Column(String(36), ForeignKey("endpoint_comments.id", ondelete="CASCADE"), nullable=True)
+    parent_id = Column(UUID(as_uuid=True), ForeignKey("endpoint_comments.id", ondelete="CASCADE"), nullable=True)
     
     # Line-specific annotation
     line_number = Column(String(10), nullable=True)  # Can be range like "10-15"
     
     # Status
     is_resolved = Column(Boolean, default=False)
-    resolved_by_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    resolved_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     resolved_at = Column(DateTime, nullable=True)
     
     # Timestamps
@@ -164,8 +164,8 @@ class ChangeRequest(Base):
     __tablename__ = "change_requests"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False)
-    author_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    endpoint_id = Column(UUID(as_uuid=True), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False)
+    author_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # Change details
     title = Column(String(200), nullable=False)
@@ -178,7 +178,7 @@ class ChangeRequest(Base):
     status = Column(String(20), default=ChangeStatus.PENDING.value)
     
     # Review
-    reviewer_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    reviewer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     reviewed_at = Column(DateTime, nullable=True)
     review_comment = Column(Text, nullable=True)
     
@@ -201,7 +201,7 @@ class ActivityLog(Base):
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
-    user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     
     # Activity details
     action = Column(String(50), nullable=False)  # e.g., "endpoint.updated", "member.invited"

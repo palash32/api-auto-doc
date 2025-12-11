@@ -41,8 +41,8 @@ class HealthCheck(Base):
     __tablename__ = "health_checks"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=True)
-    repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
+    endpoint_id = Column(UUID(as_uuid=True), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=True)
+    repository_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
     # Target
     url = Column(String(500), nullable=False)
@@ -77,7 +77,7 @@ class EndpointHealthSummary(Base):
     __tablename__ = "endpoint_health_summaries"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False, unique=True)
+    endpoint_id = Column(UUID(as_uuid=True), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=False, unique=True)
     
     # Current status
     current_status = Column(String(20), default="unknown")
@@ -118,7 +118,7 @@ class HealthAlert(Base):
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
-    endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="SET NULL"), nullable=True)
+    endpoint_id = Column(UUID(as_uuid=True), ForeignKey("api_endpoints.id", ondelete="SET NULL"), nullable=True)
     
     # Alert details
     alert_type = Column(String(50), nullable=False)  # status_change, high_latency, downtime
@@ -134,7 +134,7 @@ class HealthAlert(Base):
     # Status
     is_resolved = Column(Boolean, default=False)
     resolved_at = Column(DateTime, nullable=True)
-    acknowledged_by_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    acknowledged_by_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     acknowledged_at = Column(DateTime, nullable=True)
     
     # Timestamps
@@ -153,7 +153,7 @@ class AlertConfig(Base):
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
-    endpoint_id = Column(String(36), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=True)  # Null = org-wide
+    endpoint_id = Column(UUID(as_uuid=True), ForeignKey("api_endpoints.id", ondelete="CASCADE"), nullable=True)  # Null = org-wide
     
     # Channel settings
     channel = Column(String(20), nullable=False)  # email, slack, pagerduty, webhook
@@ -188,7 +188,7 @@ class HealthCheckSchedule(Base):
     __tablename__ = "health_check_schedules"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
+    repository_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
     # Schedule
     interval_seconds = Column(Integer, default=300)  # Default: 5 minutes

@@ -37,7 +37,7 @@ class ImportJob(Base):
     __tablename__ = "import_jobs"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
+    repository_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
     # Import details
     format = Column(String(30), nullable=False)
@@ -71,7 +71,7 @@ class ExportJob(Base):
     __tablename__ = "export_jobs"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    repository_id = Column(String(36), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
+    repository_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
     # Export details
     format = Column(String(30), nullable=False)
