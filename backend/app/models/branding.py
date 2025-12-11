@@ -108,7 +108,7 @@ class BrandingTemplate(Base):
     """
     __tablename__ = "branding_templates"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     
     # Template info
     name = Column(String(100), nullable=False)

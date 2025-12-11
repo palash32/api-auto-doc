@@ -1,6 +1,7 @@
 """Version history and changelog models for tracking API changes."""
 
 from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, DateTime, Text, JSON
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from datetime import datetime
@@ -15,7 +16,7 @@ class APIVersion(Base):
     """
     __tablename__ = "api_versions"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     repository_id = Column(UUID(as_uuid=True), ForeignKey("repositories.id", ondelete="CASCADE"), nullable=False)
     
     # Version identification
@@ -60,7 +61,7 @@ class EndpointChange(Base):
     """
     __tablename__ = "endpoint_changes"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     version_id = Column(UUID(as_uuid=True), ForeignKey("api_versions.id", ondelete="CASCADE"), nullable=False)
     endpoint_id = Column(UUID(as_uuid=True), ForeignKey("api_endpoints.id", ondelete="SET NULL"), nullable=True)
     
@@ -98,7 +99,7 @@ class Changelog(Base):
     """
     __tablename__ = "changelogs"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     version_id = Column(UUID(as_uuid=True), ForeignKey("api_versions.id", ondelete="CASCADE"), nullable=False, unique=True)
     
     # Changelog content
@@ -131,7 +132,7 @@ class VersionBookmark(Base):
     """
     __tablename__ = "version_bookmarks"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     version_id = Column(UUID(as_uuid=True), ForeignKey("api_versions.id", ondelete="CASCADE"), nullable=False)
     
