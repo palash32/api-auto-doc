@@ -15,7 +15,8 @@ if settings.DATABASE_URL.startswith("sqlite"):
 else:
     # PostgreSQL for production
     ASYNC_DATABASE_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
-    SYNC_DATABASE_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+pg8000://")
+    # Use psycopg2 for sync engine (psycopg2-binary is installed)
+    SYNC_DATABASE_URL = settings.DATABASE_URL
 
 sync_engine = create_engine(
     SYNC_DATABASE_URL,
