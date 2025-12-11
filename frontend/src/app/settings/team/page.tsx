@@ -56,9 +56,12 @@ export default function TeamSettingsPage() {
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
     const [loading, setLoading] = useState(true);
     const [showInviteModal, setShowInviteModal] = useState(false);
+    const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteRole, setInviteRole] = useState("developer");
     const [searchQuery, setSearchQuery] = useState("");
+    const [newWorkspaceName, setNewWorkspaceName] = useState("");
+    const [newWorkspaceDescription, setNewWorkspaceDescription] = useState("");
 
     useEffect(() => {
         fetchData();
@@ -128,6 +131,31 @@ export default function TeamSettingsPage() {
             fetchData();
         } catch (e) {
             console.error("Failed to remove member:", e);
+        }
+    };
+
+    const createWorkspace = async () => {
+        if (!newWorkspaceName) return;
+
+        try {
+            const res = await fetch("http://localhost:8000/api/team/workspaces", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: newWorkspaceName,
+                    description: newWorkspaceDescription,
+                    slug: newWorkspaceName.toLowerCase().replace(/\s+/g, '-')
+                })
+            });
+
+            if (res.ok) {
+                setShowWorkspaceModal(false);
+                setNewWorkspaceName("");
+                setNewWorkspaceDescription("");
+                fetchData();
+            }
+        } catch (e) {
+            console.error("Failed to create workspace:", e);
         }
     };
 
@@ -322,7 +350,10 @@ export default function TeamSettingsPage() {
                         ))}
 
                         {/* Add Workspace Card */}
-                        <button className="p-4 border-2 border-dashed border-white/10 rounded-xl hover:border-white/20 transition-colors flex flex-col items-center justify-center gap-2 text-gray-500 hover:text-white min-h-[120px]">
+                        <button
+                            onClick={() => setShowWorkspaceModal(true)}
+                            className="p-4 border-2 border-dashed border-white/10 rounded-xl hover:border-white/20 transition-colors flex flex-col items-center justify-center gap-2 text-gray-500 hover:text-white min-h-[120px]"
+                        >
                             <Plus size={24} />
                             <span className="text-sm">Create Workspace</span>
                         </button>
@@ -379,6 +410,56 @@ export default function TeamSettingsPage() {
                             >
                                 <Mail size={16} />
                                 Send Invitation
+                            </button>
+                        </div>
+                    </GlassCard>
+                </div>
+            )}
+
+            {/* Workspace Modal */}
+            {showWorkspaceModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                    <GlassCard className="w-full max-w-md p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-lg font-semibold">Create Workspace</h2>
+                            <button
+                                onClick={() => setShowWorkspaceModal(false)}
+                                className="p-1 hover:bg-white/10 rounded-lg"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-2">Workspace Name</label>
+                                <input
+                                    type="text"
+                                    value={newWorkspaceName}
+                                    onChange={(e) => setNewWorkspaceName(e.target.value)}
+                                    placeholder="e.g., Backend APIs"
+                                    className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-2">Description (optional)</label>
+                                <textarea
+                                    value={newWorkspaceDescription}
+                                    onChange={(e) => setNewWorkspaceDescription(e.target.value)}
+                                    placeholder="Describe what this workspace is for..."
+                                    rows={3}
+                                    className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500/50 resize-none"
+                                />
+                            </div>
+
+                            <button
+                                onClick={createWorkspace}
+                                disabled={!newWorkspaceName}
+                                className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Folder size={16} />
+                                Create Workspace
                             </button>
                         </div>
                     </GlassCard>

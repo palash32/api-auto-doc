@@ -1,198 +1,160 @@
 # API Auto-Documentation Platform
 
-> **Automatically discover, document, and monitor all APIs across your organization's codebase in real-time.**
+> AI-powered API documentation generator that automatically scans repositories, discovers endpoints, and creates beautiful, interactive documentation.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Node.js 20+](https://img.shields.io/badge/node-20+-green.svg)](https://nodejs.org/)
+[![CI Status](https://github.com/UniSpark/api-auto-doc/workflows/CI/badge.svg)](https://github.com/UniSpark/api-auto-doc/actions)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-## 🎯 Overview
+## 🚀 Features
 
-API Auto-Documentation Platform is an enterprise SaaS product that eliminates API sprawl by automatically discovering, documenting, and monitoring APIs across your codebase. Reduce developer time waste by 40% with AI-powered documentation and real-time health monitoring.
+- **🔍 Automatic API Discovery** - Scans GitHub repositories to find API endpoints
+- **🤖 AI-Powered Documentation** - Uses Gemini AI to generate comprehensive docs
+- **🎨 Beautiful UI** - Glass-morphism design with dark mode
+- **🔐 GitHub OAuth** - Secure authentication with GitHub
+- **📊 Health Monitoring** - Track API health and uptime
+- **🧪 API Playground** - Test endpoints directly in the browser
+- **👥 Team Collaboration** - Invite team members and manage access
+- **💳 Billing & Plans** - Stripe-ready subscription management
 
-### Key Features
+## 🛠️ Tech Stack
 
-- 🔍 **Automatic API Discovery**: Scan GitHub repositories to find all API endpoints
-- 🤖 **AI-Powered Documentation**: Generate comprehensive API docs using Google Gemini AI
-- 📊 **Real-time Updates**: Automatic re-scanning via GitHub webhooks
-- 🔒 **GitHub OAuth**: Secure authentication and repository access
-- 🎨 **Beautiful UI**: Apple-inspired design with smooth animations
-- ⚡ **Fast & Efficient**: Optimized scanning and caching
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | Next.js 14, React 18, TypeScript, TailwindCSS |
+| **Backend** | FastAPI, Python 3.11, SQLAlchemy, Alembic |
+| **Database** | PostgreSQL 16 |
+| **AI** | Google Gemini API |
+| **Auth** | GitHub OAuth, JWT |
+| **Deployment** | Vercel (Frontend), Render (Backend), Neon (Database) |
 
-## 📚 Documentation
+## 📋 Prerequisites
 
-- [Quick Start Guide](docs/QUICK_TEST.md) - Test the platform in 10 minutes
-- [Deployment Guide](docs/DEPLOYMENT.md) - Deploy to production
-- [Testing Checklist](docs/TESTING_CHECKLIST.md) - Comprehensive testing
-- [Production Checklist](docs/PRODUCTION_CHECKLIST.md) - Pre-launch verification
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Frontend (Next.js)                       │
-│  Dashboard | API Browser | Dependency Graph | Monitoring    │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-                      │ REST API
-                      │
-┌─────────────────────▼───────────────────────────────────────┐
-│                   Backend (FastAPI)                          │
-│  Auth | Repository Scanner | AI Doc Generator | Monitoring   │
-└─────────┬───────────┬───────────┬────────────────────────────┘
-          │           │           │
-          │           │           │
-┌─────────▼───┐  ┌────▼─────┐  ┌─▼──────────┐
-│  PostgreSQL │  │  Redis   │  │  Celery    │
-│  (Database) │  │  (Cache) │  │  (Workers) │
-└─────────────┘  └──────────┘  └────────────┘
-```
+- Node.js >= 18.x
+- Python >= 3.11
+- PostgreSQL >= 14.x
+- GitHub OAuth App credentials
+- Google Gemini API key
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### 1. Clone & Install
 
-- Docker and Docker Compose
-- Node.js 20+ (for local frontend development)
-- Python 3.11+ (for local backend development)
-- Google Gemini API key (free with JIO subscription)
-- GitHub OAuth App credentials (optional for repository integration)
-
-### Local Development Setup
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/yourusername/api-autodoc-platform.git
-   cd api-autodoc-platform
-   ```
-
-2. **Set up environment variables**:
-   ```bash
-   # Copy example files
-   cp .env.example .env
-   cp frontend/.env.example frontend/.env.local
-   cp backend/.env.example backend/.env
-   
-   # Edit .env files with your API keys and credentials
-   ```
-
-3. **Start all services with Docker Compose**:
-   ```bash
-   docker-compose up -d
-   ```
-
-4. **Run database migrations**:
-   ```bash
-   docker-compose exec backend alembic upgrade head
-   ```
-
-5. **Access the application**:
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
-   - API Docs: http://localhost:8000/docs
-
-### Development Without Docker
-
-**Backend**:
 ```bash
+# Clone repository
+git clone https://github.com/UniSpark/api-auto-doc.git
+cd api-auto-doc
+
+# Backend setup
 cd backend
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+
+# Frontend setup
+cd ../frontend
+npm install
 ```
 
-**Frontend**:
+### 2. Configure Environment
+
 ```bash
+# Backend
+cp backend/.env.example backend/.env
+# Edit backend/.env with your credentials
+
+# Frontend
+cp frontend/.env.example frontend/.env.local
+# Edit frontend/.env.local with your API URL
+```
+
+### 3. Run Development Servers
+
+```bash
+# Terminal 1 - Backend
+cd backend
+uvicorn app.main:app --reload --port 8000
+
+# Terminal 2 - Frontend
 cd frontend
-npm install
 npm run dev
 ```
 
-## 📚 Documentation
+Visit http://localhost:3000
 
-- [Architecture Guide](docs/ARCHITECTURE.md)
-- [API Reference](docs/API.md)
-- [Deployment Guide](docs/DEPLOYMENT.md)
-- [Contributing Guidelines](CONTRIBUTING.md)
+## 📁 Project Structure
+
+```
+api-auto-doc/
+├── backend/                 # FastAPI backend
+│   ├── app/
+│   │   ├── api/            # API endpoints
+│   │   ├── core/           # Core config, auth, database
+│   │   ├── models/         # SQLAlchemy models
+│   │   └── services/       # Business logic services
+│   ├── requirements.txt
+│   └── Dockerfile
+│
+├── frontend/               # Next.js frontend
+│   ├── src/
+│   │   ├── app/           # App router pages
+│   │   ├── components/    # React components
+│   │   └── lib/           # Utilities
+│   ├── package.json
+│   └── Dockerfile
+│
+├── .github/workflows/      # CI/CD pipelines
+├── render.yaml            # Render deployment config
+└── docker-compose.yml     # Local development
+```
 
 ## 🧪 Testing
 
-**Backend Tests**:
 ```bash
+# Backend tests
 cd backend
-pytest --cov=app tests/
-```
+pytest tests/ -v
 
-**Frontend Tests**:
-```bash
+# Frontend tests
 cd frontend
-npm run test
+npm test
+
+# E2E tests
 npm run test:e2e
 ```
 
-## 🔒 Security
+## 🚢 Deployment
 
-- All sensitive data encrypted at rest and in transit
-- OAuth2 authentication with JWT tokens
-- Role-based access control (RBAC)
-- Regular security audits and dependency updates
-- See [SECURITY.md](SECURITY.md) for reporting vulnerabilities
+### Option 1: One-Click Deploy
 
-## 📊 Tech Stack
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
-### Frontend
-- Next.js 14 (App Router)
-- TypeScript
-- TailwindCSS + shadcn/ui
-- React Query, React Flow, Recharts
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/UniSpark/api-auto-doc)
 
-### Backend
-- Python 3.11+
-- FastAPI
-- SQLAlchemy + Alembic
-- Celery + Redis
-- Google Gemini Pro (AI Documentation)
+### Option 2: Manual Deployment
 
-### Infrastructure
-- Docker & Kubernetes
-- PostgreSQL
-- Redis
-- GitHub Actions (CI/CD)
-- Terraform
+See [Deployment Guide](docs/deployment/README.md)
 
-## 🗺️ Roadmap
+## 📚 Documentation
 
-- [x] Phase 1: Foundation & Setup
-- [ ] Phase 2: Backend Core Services
-- [ ] Phase 3: Frontend Application
-- [ ] Phase 4: Monitoring & Health Checks
-- [ ] Phase 5: Advanced Features
-- [ ] Phase 6: Security & Compliance
-- [ ] Phase 7: Testing & QA
-- [ ] Phase 8: DevOps & Deployment
-- [ ] Phase 9: Go-to-Market
-- [ ] Phase 10: Launch
-
-## 💰 Pricing
-
-- **Team Plan**: $49/month per developer (minimum 5 developers)
-- **Enterprise Plan**: Custom pricing for 100+ developers
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- [API Reference](docs/api/)
+- [Architecture Overview](docs/architecture/)
+- [Development Guide](docs/development/)
+- [Deployment Guide](docs/deployment/)
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-## 📧 Support
+## 📄 License
 
-- Email: support@apidocplatform.com
-- Documentation: https://docs.apidocplatform.com
-- Issues: [GitHub Issues](https://github.com/yourusername/api-autodoc-platform/issues)
+This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
+
+## 🙋 Support
+
+- [Issue Tracker](https://github.com/UniSpark/api-auto-doc/issues)
+- [Discussions](https://github.com/UniSpark/api-auto-doc/discussions)
 
 ---
 
-**Built with ❤️ by developers, for developers.**
+Built with ❤️ by UniSpark

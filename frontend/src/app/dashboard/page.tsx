@@ -78,8 +78,8 @@ const Sidebar = ({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed
                     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", active: true },
                     { icon: GitBranch, label: "Repositories", href: "/apis" },
                     { icon: Play, label: "Playground", href: "/playground" },
-                    { icon: Activity, label: "Monitoring", href: "/monitoring" },
-                    { icon: Shield, label: "Security", href: "/security" },
+                    { icon: Activity, label: "Monitoring", href: "/health" },
+                    { icon: Shield, label: "Security", href: "/settings/security" },
                     { icon: Settings, label: "Settings", href: "/settings" },
                 ].map((item, idx) => (
                     <Link
@@ -189,18 +189,30 @@ const RepoCard = ({ repo }: { repo: Repository }) => {
 
             <div className="mt-4 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
                 <button
-                    onClick={() => window.location.href = `/apis?repo=${repo.id}`}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        window.location.href = `/apis?repo=${repo.id}`;
+                    }}
                     className="text-xs text-white hover:text-blue-400 flex items-center gap-1"
                 >
                     View Details <ChevronRight size={12} />
                 </button>
-                <div className="flex -space-x-2">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="w-6 h-6 rounded-full bg-gray-800 border border-black flex items-center justify-center text-[10px] text-gray-400">
-                            U{i}
-                        </div>
-                    ))}
-                </div>
+                <button
+                    onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/repositories/${repo.id}/scan`, {
+                                method: 'POST',
+                            });
+                            alert('Scan initiated! Please refresh in a moment.');
+                        } catch (error) {
+                            alert('Failed to start scan. Please try again.');
+                        }
+                    }}
+                    className="px-3 py-1.5 text-xs bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg flex items-center gap-1 transition-colors"
+                >
+                    <Activity size={12} /> Scan Now
+                </button>
             </div>
         </GlassCard>
     );
@@ -213,7 +225,22 @@ export default function DashboardPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [showNotifications, setShowNotifications] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Demo notifications
+    const notifications = [
+        { id: 1, title: "Scan Complete", message: "fastapi repository has been scanned", time: "2m ago", read: false },
+        { id: 2, title: "New Endpoints", message: "5 new endpoints discovered", time: "1h ago", read: false },
+        { id: 3, title: "Health Alert", message: "Documentation coverage below 80%", time: "3h ago", read: true },
+    ];
+
+    // Filter repositories based on search
+    const filteredRepos = repositories.filter(repo =>
+        repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        repo.url?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     const fetchRepos = async () => {
         try {
@@ -317,18 +344,58 @@ export default function DashboardPage() {
                                 <Search size={18} className="text-white/40 mr-3" />
                                 <input
                                     type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Search repositories..."
                                     className="bg-transparent border-none outline-none text-sm text-white placeholder-white/30 w-full"
                                 />
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery("")}
+                                        className="text-white/40 hover:text-white mr-2"
+                                    >
+                                        ×
+                                    </button>
+                                )}
                                 <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-white/40 font-mono border border-white/5">
                                     <span>⌘</span><span>K</span>
                                 </div>
                             </div>
                         </div>
 
-                        <button className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 text-white/60 hover:text-white active:scale-95">
-                            <Bell size={20} />
-                        </button>
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 text-white/60 hover:text-white active:scale-95 relative"
+                            >
+                                <Bell size={20} />
+                                {notifications.filter(n => !n.read).length > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center text-white">
+                                        {notifications.filter(n => !n.read).length}
+                                    </span>
+                                )}
+                            </button>
+
+                            {showNotifications && (
+                                <div className="absolute right-0 top-12 w-80 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+                                    <div className="p-3 border-b border-white/10 flex items-center justify-between">
+                                        <h4 className="text-sm font-medium">Notifications</h4>
+                                        <button className="text-xs text-blue-400 hover:text-blue-300">Mark all read</button>
+                                    </div>
+                                    <div className="max-h-80 overflow-y-auto">
+                                        {notifications.map(n => (
+                                            <div key={n.id} className={`p-3 border-b border-white/5 hover:bg-white/5 cursor-pointer ${!n.read ? 'bg-blue-500/5' : ''}`}>
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-sm font-medium">{n.title}</p>
+                                                    <span className="text-[10px] text-gray-500">{n.time}</span>
+                                                </div>
+                                                <p className="text-xs text-gray-400 mt-0.5">{n.message}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                         {isAuthenticated ? (
                             <div className="flex items-center gap-3">
@@ -381,10 +448,14 @@ export default function DashboardPage() {
                                 [1, 2, 3].map(i => (
                                     <SkeletonCard key={i} className="min-h-[180px]" />
                                 ))
-                            ) : (
-                                repositories.map((repo) => (
+                            ) : filteredRepos.length > 0 ? (
+                                filteredRepos.map((repo) => (
                                     <RepoCard key={repo.id} repo={repo} />
                                 ))
+                            ) : (
+                                <div className="col-span-full text-center py-8 text-gray-500">
+                                    {searchQuery ? `No repositories matching "${searchQuery}"` : "No repositories yet"}
+                                </div>
                             )}
 
                             {/* Add New Card Placeholder - Polished */}

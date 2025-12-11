@@ -83,6 +83,10 @@ export default function PlaygroundPage() {
 
     // Sidebar state
     const [showHistory, setShowHistory] = useState(true);
+    const [showTokenModal, setShowTokenModal] = useState(false);
+    const [newTokenName, setNewTokenName] = useState("");
+    const [newTokenValue, setNewTokenValue] = useState("");
+    const [newTokenType, setNewTokenType] = useState("Bearer");
 
     // Fetch history and tokens on mount
     useEffect(() => {
@@ -214,6 +218,42 @@ export default function PlaygroundPage() {
         }
     };
 
+    const clearHistory = async () => {
+        try {
+            await fetch("/api/playground/history", { method: "DELETE" });
+            setHistory([]);
+        } catch (e) {
+            console.error("Failed to clear history:", e);
+            // Clear locally anyway
+            setHistory([]);
+        }
+    };
+
+    const addToken = async () => {
+        if (!newTokenName || !newTokenValue) return;
+
+        try {
+            const res = await fetch("/api/playground/tokens", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: newTokenName,
+                    token: newTokenValue,
+                    token_type: newTokenType
+                })
+            });
+
+            if (res.ok) {
+                fetchTokens();
+                setNewTokenName("");
+                setNewTokenValue("");
+                setShowTokenModal(false);
+            }
+        } catch (e) {
+            console.error("Failed to add token:", e);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-white">
             {/* Header */}
@@ -241,7 +281,7 @@ export default function PlaygroundPage() {
                             History
                         </button>
                         <button
-                            onClick={() => {/* Open token vault modal */ }}
+                            onClick={() => setShowTokenModal(true)}
                             className="px-3 py-2 rounded-lg text-sm flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
                         >
                             <Key size={16} />
@@ -250,6 +290,57 @@ export default function PlaygroundPage() {
                     </div>
                 </div>
             </header>
+
+            {/* Token Modal */}
+            {showTokenModal && (
+                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100]">
+                    <div className="bg-gray-900 border border-white/10 rounded-2xl p-6 w-full max-w-md">
+                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <Key className="text-purple-400" size={20} />
+                            Add New Token
+                        </h3>
+                        <div className="space-y-4">
+                            <input
+                                type="text"
+                                placeholder="Token Name (e.g., Production API Key)"
+                                value={newTokenName}
+                                onChange={(e) => setNewTokenName(e.target.value)}
+                                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                            />
+                            <select
+                                value={newTokenType}
+                                onChange={(e) => setNewTokenType(e.target.value)}
+                                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                            >
+                                <option value="Bearer">Bearer Token</option>
+                                <option value="API Key">API Key</option>
+                                <option value="Basic">Basic Auth</option>
+                            </select>
+                            <input
+                                type="password"
+                                placeholder="Token Value"
+                                value={newTokenValue}
+                                onChange={(e) => setNewTokenValue(e.target.value)}
+                                className="w-full px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                            />
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowTokenModal(false)}
+                                    className="flex-1 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={addToken}
+                                    className="flex-1 px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-sm font-medium transition-colors"
+                                >
+                                    Save Token
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="max-w-[1800px] mx-auto p-6">
                 <div className="grid grid-cols-12 gap-6">
@@ -263,7 +354,10 @@ export default function PlaygroundPage() {
                                         <Clock size={14} className="text-blue-400" />
                                         Recent Requests
                                     </h3>
-                                    <button className="text-xs text-gray-500 hover:text-white">
+                                    <button
+                                        onClick={clearHistory}
+                                        className="text-xs text-gray-500 hover:text-red-400 transition-colors"
+                                    >
                                         Clear
                                     </button>
                                 </div>

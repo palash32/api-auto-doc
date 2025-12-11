@@ -343,13 +343,28 @@ export default function BillingPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Payment Methods */}
                     <GlassCard className="p-6">
-                        <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-                            <CreditCard size={14} className="text-blue-400" />
-                            Payment Methods
-                        </h3>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-medium flex items-center gap-2">
+                                <CreditCard size={14} className="text-blue-400" />
+                                Payment Methods
+                            </h3>
+                            <button
+                                onClick={() => {
+                                    // In production, this would open Stripe checkout or payment form
+                                    alert("Payment method integration requires Stripe setup. In production, this will open a secure payment form.");
+                                }}
+                                className="text-xs px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg flex items-center gap-1"
+                            >
+                                <Plus size={12} /> Add Card
+                            </button>
+                        </div>
 
                         {paymentMethods.length === 0 ? (
-                            <p className="text-sm text-gray-500 text-center py-4">No payment methods added</p>
+                            <div className="text-center py-6">
+                                <CreditCard size={32} className="mx-auto text-gray-600 mb-2" />
+                                <p className="text-sm text-gray-500">No payment methods added</p>
+                                <p className="text-xs text-gray-600 mt-1">Add a card to subscribe to paid plans</p>
+                            </div>
                         ) : (
                             <div className="space-y-2">
                                 {paymentMethods.map((method) => (

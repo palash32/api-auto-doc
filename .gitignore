@@ -1,75 +1,282 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+# ============================================
+# AI AGENT GENERATED FILES - NEVER COMMIT
+# ============================================
 
-# Virtual environments
-venv/
-ENV/
-env/
-.venv/
+# AI-generated documentation (Agent outputs)
+**/ai-generated/**
+**/agent-output/**
+**/llm-output/**
+**/*-generated.md
+**/*-ai.md
+**/*.agent.md
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Temporary AI context files
+.ai-context/
+.agent-cache/
+.llm-cache/
+**/*.context.json
+**/*.prompt.md
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
+# AI IDE specific
+.cursor/
+.continue/
+.aider*
+.antigravity/
+.gemini/
+
+# ============================================
+# DEPENDENCIES
+# ============================================
 
 # Node.js
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+*.egg-info/
+dist/
+build/
+
+# ============================================
+# ENVIRONMENT & SECRETS
+# ============================================
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+*.env
+
+# Secret management
+.secrets/
+secrets.yaml
+secrets.json
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+.aws/credentials
+
+# Configuration with secrets
+config.local.js
+config.local.json
+database.local.yml
+
+# ============================================
+# BUILD OUTPUTS
+# ============================================
 
 # Next.js
 .next/
 out/
+.vercel
+.turbo
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# Vite
+dist/
+dist-ssr/
+
+# Build directories
+build/
+.build/
+*.build/
+coverage/
+.cache/
+
+# Docker build artifacts
+**/.dockerfile-*
+**/Dockerfile.tmp
+
+# Compiled binaries
+bin/
+*.wasm
+
+# ============================================
+# LOGS & TEMPORARY FILES
+# ============================================
 
 # Logs
 logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+lerna-debug.log*
+pnpm-debug.log*
 
-# OS
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+.temp/
+*.swp
+*.swo
+*~
 .DS_Store
 Thumbs.db
 
-# Test coverage
-htmlcov/
-.coverage
-.coverage.*
-.pytest_cache/
+# ============================================
+# IDE & EDITOR FILES
+# ============================================
 
-# Misc
-*.bak
-*.tmp
-.cache/
+# VSCode
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.code-workspace
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# ============================================
+# TESTING
+# ============================================
+
+# Test coverage
+coverage/
+.nyc_output/
+*.lcov
+.coverage
+htmlcov/
+junit.xml
+test-results/
+playwright-report/
+.playwright/
+
+# ============================================
+# DATABASES & DATA
+# ============================================
+
+# Local databases
+*.sqlite
+*.sqlite3
+*.db
+data/
+*.csv
+*.xlsx
+uploads/
+user-uploads/
+
+# Database dumps
+*.sql
+*.dump
+*.backup
+
+# ============================================
+# OPERATING SYSTEM
+# ============================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================
+# CLOUD & DEPLOYMENT
+# ============================================
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars
+
+# Kubernetes
+*.kubeconfig
+
+# ============================================
+# MONITORING & PROFILING
+# ============================================
+
+*.prof
+*.trace
+*.cpuprofile
+*.heapprofile
+
+# Sentry
+.sentryclirc
+
+# ============================================
+# DOCUMENTATION (BUILD OUTPUTS ONLY)
+# ============================================
+
+# Generated documentation
+docs/build/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+.docusaurus/
+website/build/
+
+# ============================================
+# PROJECT SPECIFIC
+# ============================================
+
+# Keep only ONE lock file (using npm)
+yarn.lock
+pnpm-lock.yaml
+
+# Backend specific
+backend/check_db.py
+backend/test_runner.py
+
+# Frontend specific
+frontend/.next/
+frontend/out/
