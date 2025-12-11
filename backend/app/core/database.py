@@ -14,7 +14,10 @@ if settings.DATABASE_URL.startswith("sqlite"):
     ASYNC_DATABASE_URL = settings.DATABASE_URL.replace("sqlite:///", "sqlite+aiosqlite:///")
 else:
     # PostgreSQL for production
-    ASYNC_DATABASE_URL = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+    # asyncpg uses 'ssl' instead of 'sslmode', so we need to convert
+    base_url = settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
+    # Convert sslmode to ssl for asyncpg compatibility
+    ASYNC_DATABASE_URL = base_url.replace("sslmode=", "ssl=")
     # Use psycopg2 for sync engine (psycopg2-binary is installed)
     SYNC_DATABASE_URL = settings.DATABASE_URL
 
