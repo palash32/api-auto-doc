@@ -1,7 +1,7 @@
 """Team collaboration models for multi-user access control."""
 
 from sqlalchemy import Column, String, Boolean, ForeignKey, DateTime, Text, Enum as SQLEnum, JSON
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from uuid import uuid4
 from datetime import datetime

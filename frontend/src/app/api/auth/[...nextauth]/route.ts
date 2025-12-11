@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-export const handler = NextAuth({
+const authOptions = {
     providers: [
         CredentialsProvider({
             name: "Backend Token",
@@ -31,7 +31,7 @@ export const handler = NextAuth({
         }),
     ],
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user }: { token: any; user?: any }) {
             if (user) {
                 token.accessToken = user.accessToken;
                 token.role = user.role;
@@ -39,7 +39,7 @@ export const handler = NextAuth({
             }
             return token;
         },
-        async session({ session, token }) {
+        async session({ session, token }: { session: any; token: any }) {
             session.accessToken = token.accessToken;
             session.user.role = token.role;
             session.user.organizationId = token.organizationId;
@@ -50,8 +50,10 @@ export const handler = NextAuth({
         signIn: "/login",
     },
     session: {
-        strategy: "jwt",
+        strategy: "jwt" as const,
     },
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
