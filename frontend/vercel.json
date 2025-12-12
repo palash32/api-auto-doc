@@ -6,9 +6,5 @@
     "devCommand": "npm run dev",
     "regions": [
         "iad1"
-    ],
-    "env": {
-        "NEXT_PUBLIC_API_URL": "@api_url",
-        "NEXT_PUBLIC_WS_HOST": "@ws_host"
-    }
+    ]
 }
