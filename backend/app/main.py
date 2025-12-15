@@ -34,11 +34,45 @@ async def startup():
     logger.info(f"📝 Environment: {settings.ENVIRONMENT}")
     logger.info(f"🔗 Frontend URL: {settings.FRONTEND_URL}")
     
-    # Create database tables
+    # Create database tables (development only)
     if settings.is_development:
         async with async_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("✅ Database tables created")
+    
+    # Run migrations for all environments (including production)
+    await run_migrations()
+
+
+async def run_migrations():
+    """Run database migrations that can't be done via Alembic on free tier hosting."""
+    from sqlalchemy import text
+    
+    try:
+        async with async_engine.begin() as conn:
+            # Check if github_id column exists
+            result = await conn.execute(text("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name = 'users' AND column_name = 'github_id'
+            """))
+            column_exists = result.fetchone() is not None
+            
+            if not column_exists:
+                logger.info("🔄 Running migration: Adding github_id column to users table...")
+                await conn.execute(text("""
+                    ALTER TABLE users ADD COLUMN github_id VARCHAR(50) UNIQUE
+                """))
+                await conn.execute(text("""
+                    ALTER TABLE users ADD COLUMN github_username VARCHAR(100)
+                """))
+                await conn.execute(text("""
+                    CREATE INDEX IF NOT EXISTS idx_users_github_id ON users(github_id)
+                """))
+                logger.info("✅ Migration complete: github_id column added")
+            else:
+                logger.info("✅ Database schema up to date")
+    except Exception as e:
+        logger.warning(f"⚠️ Migration check failed (may be expected on first run): {e}")
 
 
 @app.on_event("shutdown")
