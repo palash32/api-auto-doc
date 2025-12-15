@@ -80,6 +80,10 @@ class User(Base):
     updated_at = Column(DateTime, default=current_timestamp, onupdate=current_timestamp)
     last_login = Column(DateTime, nullable=True)
     
+    # OAuth provider IDs (for reliable user lookup)
+    github_id = Column(String(50), unique=True, nullable=True, index=True)  # GitHub numeric user ID
+    github_username = Column(String(100), nullable=True)  # GitHub login username
+    
     # Relationships
     organization = relationship("Organization", back_populates="users")
     api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")

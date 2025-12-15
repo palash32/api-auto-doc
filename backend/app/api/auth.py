@@ -154,14 +154,25 @@ async def github_callback(
             detail=f"Failed to fetch user from GitHub: {str(e)}"
         )
     
-    # Step 3: Create or get existing user
-    email = github_user.get("email") or f"{github_user['login']}@users.noreply.github.com"
+    # Step 3: Create or get existing user using GitHub ID (most reliable identifier)
+    github_id = str(github_user["id"])  # GitHub numeric user ID - never changes
     github_username = github_user["login"]
+    email = github_user.get("email") or f"{github_username}@users.noreply.github.com"
     full_name = github_user.get("name") or github_username
     
-    # Check if user exists
-    result = await db.execute(select(User).where(User.email == email))
+    # Primary lookup: by GitHub ID (most reliable)
+    result = await db.execute(select(User).where(User.github_id == github_id))
     user = result.scalar_one_or_none()
+    
+    # Fallback: by email (for users created before github_id was added)
+    if not user:
+        result = await db.execute(select(User).where(User.email == email))
+        user = result.scalar_one_or_none()
+        if user:
+            # Migrate existing user: add github_id for future logins
+            user.github_id = github_id
+            user.github_username = github_username
+            logger.info(f"Migrated user {email} to use github_id {github_id}")
     
     if not user:
         # Create organization (MVP: one org per user)
@@ -174,7 +185,7 @@ async def github_callback(
         db.add(organization)
         await db.flush()  # Get org ID
         
-        # Create user
+        # Create user with GitHub ID for reliable future lookups
         user = User(
             email=email,
             hashed_password="",  # OAuth users don't need password
@@ -182,14 +193,20 @@ async def github_callback(
             organization_id=organization.id,
             role=UserRole.ADMIN,  # First user is admin
             is_active=True,
-            is_verified=True
+            is_verified=True,
+            github_id=github_id,
+            github_username=github_username
         )
         db.add(user)
         await db.commit()
         await db.refresh(user)
+        logger.info(f"Created new user: {email} with github_id {github_id}")
     else:
-        # Update last login
+        # Update last login and ensure github info is current
         user.last_login = None  # Will be set by default
+        user.github_username = github_username  # Username can change, so update it
+        if not user.github_id:
+            user.github_id = github_id
         await db.commit()
     
     # Step 4: Create JWT token for our app
