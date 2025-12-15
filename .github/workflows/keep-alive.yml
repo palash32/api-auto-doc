@@ -1,0 +1,43 @@
+name: Keep Render Alive
+
+# This workflow prevents Render free tier from going to sleep
+# by pinging the health endpoint every 14 minutes (just under Render's 15-min idle timeout)
+
+on:
+  schedule:
+    # Run every 14 minutes - GitHub cron minimum is 5 mins, 14 mins is safe buffer
+    - cron: '*/14 * * * *'
+  workflow_dispatch:  # Allow manual trigger for testing
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    
+    steps:
+      - name: Ping Health Endpoint
+        run: |
+          echo "🏥 Pinging backend health endpoint..."
+          
+          # Primary health check
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 30 \
+            https://api-auto-doc.onrender.com/api/health || echo "000")
+          
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✅ Backend is healthy (HTTP $HTTP_STATUS)"
+          elif [ "$HTTP_STATUS" = "000" ]; then
+            echo "⚠️ Backend is waking up from cold start..."
+            # Retry after 10 seconds (Render cold start takes ~10-30s)
+            sleep 10
+            curl -s --max-time 60 https://api-auto-doc.onrender.com/api/health || true
+            echo "🔄 Wake-up ping sent"
+          else
+            echo "⚠️ Backend returned HTTP $HTTP_STATUS"
+          fi
+          
+      - name: Ping API Root (Backup)
+        run: |
+          # Secondary ping to root API endpoint
+          curl -s --max-time 30 https://api-auto-doc.onrender.com/api/ || true
+          echo "📡 Backup ping complete"
