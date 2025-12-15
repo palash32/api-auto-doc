@@ -29,6 +29,7 @@ import { api, Repository } from "@/lib/api";
 import { AddRepositoryModal } from "@/components/add-repository-modal";
 import { ActivityFeed, DEMO_ACTIVITIES } from "@/components/activity-feed";
 import Link from "next/link";
+import { API_BASE_URL } from "@/lib/api";
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger, Flip);
@@ -201,7 +202,7 @@ const RepoCard = ({ repo }: { repo: Repository }) => {
                     onClick={async (e) => {
                         e.stopPropagation();
                         try {
-                            await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/repositories/${repo.id}/scan`, {
+                            await fetch(`${API_BASE_URL}/api/repositories/${repo.id}/scan`, {
                                 method: 'POST',
                             });
                             alert('Scan initiated! Please refresh in a moment.');
@@ -230,11 +231,16 @@ export default function DashboardPage() {
     const containerRef = useRef<HTMLDivElement>(null);
 
     // Demo notifications
-    const notifications = [
+    const [notifications, setNotifications] = useState([
         { id: 1, title: "Scan Complete", message: "fastapi repository has been scanned", time: "2m ago", read: false },
         { id: 2, title: "New Endpoints", message: "5 new endpoints discovered", time: "1h ago", read: false },
         { id: 3, title: "Health Alert", message: "Documentation coverage below 80%", time: "3h ago", read: true },
-    ];
+    ]);
+
+    // Mark all notifications as read
+    const markAllRead = () => {
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    };
 
     // Filter repositories based on search
     const filteredRepos = repositories.filter(repo =>
@@ -377,10 +383,15 @@ export default function DashboardPage() {
                             </button>
 
                             {showNotifications && (
-                                <div className="absolute right-0 top-12 w-80 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+                                <div className="absolute right-0 top-12 w-80 bg-[#1a1a1a] backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl z-50 overflow-hidden">
                                     <div className="p-3 border-b border-white/10 flex items-center justify-between">
                                         <h4 className="text-sm font-medium">Notifications</h4>
-                                        <button className="text-xs text-blue-400 hover:text-blue-300">Mark all read</button>
+                                        <button
+                                            onClick={markAllRead}
+                                            className="text-xs text-blue-400 hover:text-blue-300 cursor-pointer"
+                                        >
+                                            Mark all read
+                                        </button>
                                     </div>
                                     <div className="max-h-80 overflow-y-auto">
                                         {notifications.map(n => (
@@ -405,7 +416,7 @@ export default function DashboardPage() {
                             </div>
                         ) : (
                             <MagneticButton
-                                onClick={() => window.location.href = 'http://localhost:8000/api/auth/github/login'}
+                                onClick={() => window.location.href = `${API_BASE_URL}/api/auth/github/login`}
                                 className="bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-xl font-medium flex items-center gap-2 border border-white/10 transition-all"
                             >
                                 <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="text-white">

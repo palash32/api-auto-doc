@@ -13,6 +13,7 @@ import {
     Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import { GlassCard } from "@/components/ui/glass-card";
 import { useDebounce } from "@/hooks/useDebounce";
 
@@ -81,7 +82,7 @@ export default function SearchPage() {
 
     const fetchSuggestions = async () => {
         try {
-            const res = await fetch(`http://localhost:8000/api/search/suggestions?q=${query}`);
+            const res = await fetch(`${API_BASE_URL}/api/search/suggestions?q=${query}`);
             if (res.ok) {
                 const data = await res.json();
                 setSuggestions(data.suggestions);
@@ -96,7 +97,7 @@ export default function SearchPage() {
     const performSearch = async () => {
         setLoading(true);
         try {
-            const res = await fetch("http://localhost:8000/api/search", {
+            const res = await fetch(`${API_BASE_URL}/api/search`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

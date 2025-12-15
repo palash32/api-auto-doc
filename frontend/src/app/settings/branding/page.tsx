@@ -18,6 +18,7 @@ import {
     Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import { GlassCard } from "@/components/ui/glass-card";
 
 interface BrandingSettings {
@@ -86,8 +87,8 @@ export default function BrandingSettingsPage() {
         setLoading(true);
         try {
             const [brandingRes, domainsRes] = await Promise.all([
-                fetch("http://localhost:8000/api/branding/branding"),
-                fetch("http://localhost:8000/api/branding/domains")
+                fetch(`${API_BASE_URL}/api/branding/branding`),
+                fetch(`${API_BASE_URL}/api/branding/domains`)
             ]);
 
             if (brandingRes.ok) {
@@ -108,7 +109,7 @@ export default function BrandingSettingsPage() {
         setSaving(true);
 
         try {
-            await fetch("http://localhost:8000/api/branding/branding", {
+            await fetch(`${API_BASE_URL}/api/branding/branding`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(branding)
@@ -124,7 +125,7 @@ export default function BrandingSettingsPage() {
         if (!confirm("Reset all branding to defaults?")) return;
 
         try {
-            await fetch("http://localhost:8000/api/branding/branding/reset", {
+            await fetch(`${API_BASE_URL}/api/branding/branding/reset`, {
                 method: "POST"
             });
             fetchData();
@@ -137,7 +138,7 @@ export default function BrandingSettingsPage() {
         if (!newDomain) return;
 
         try {
-            const res = await fetch("http://localhost:8000/api/branding/domains", {
+            const res = await fetch(`${API_BASE_URL}/api/branding/domains`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ domain: newDomain })
@@ -154,7 +155,7 @@ export default function BrandingSettingsPage() {
 
     const verifyDomain = async (domainId: string) => {
         try {
-            await fetch(`http://localhost:8000/api/branding/domains/${domainId}/verify`, {
+            await fetch(`${API_BASE_URL}/api/branding/domains/${domainId}/verify`, {
                 method: "POST"
             });
             fetchData();
@@ -167,7 +168,7 @@ export default function BrandingSettingsPage() {
         if (!confirm("Remove this domain?")) return;
 
         try {
-            await fetch(`http://localhost:8000/api/branding/domains/${domainId}`, {
+            await fetch(`${API_BASE_URL}/api/branding/domains/${domainId}`, {
                 method: "DELETE"
             });
             fetchData();

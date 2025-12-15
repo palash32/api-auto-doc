@@ -1,23 +1,236 @@
-"""GitHub OAuth authentication endpoints."""
+"""Authentication endpoints: Email/Password and GitHub OAuth."""
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from pydantic import BaseModel, EmailStr, Field, field_validator
 import httpx
 import uuid
+import re
 
 from app.core.config import settings
 from app.core.database import get_async_db
-from app.core.security import create_access_token, verify_token
+from app.core.security import create_access_token, verify_token, get_password_hash, verify_password
 from app.core.encryption import encrypt_token
 from app.models.user import User, Organization, UserRole, SubscriptionTier
 from app.core.logger import logger
 
+
+# ============ Pydantic Schemas for Email/Password Auth ============
+
+class RegisterRequest(BaseModel):
+    """Registration request with production-ready validation."""
+    email: EmailStr = Field(..., description="Valid email address")
+    password: str = Field(..., min_length=8, max_length=128, description="Password (8-128 chars)")
+    full_name: str = Field(..., min_length=2, max_length=100, description="Full name")
+    
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v):
+        """Ensure password meets security requirements."""
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters')
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not re.search(r'\d', v):
+            raise ValueError('Password must contain at least one digit')
+        return v
+    
+    @field_validator('full_name')
+    @classmethod
+    def validate_full_name(cls, v):
+        """Sanitize and validate full name."""
+        v = v.strip()
+        if len(v) < 2:
+            raise ValueError('Name must be at least 2 characters')
+        return v
+
+
+class LoginRequest(BaseModel):
+    """Login request."""
+    email: EmailStr
+    password: str = Field(..., min_length=1)
+
+
+class AuthResponse(BaseModel):
+    """Authentication response with token."""
+    access_token: str
+    token_type: str = "bearer"
+    user: dict
+
+
+class PasswordResetRequest(BaseModel):
+    """Password reset request."""
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    """Password reset confirmation."""
+    token: str
+    new_password: str = Field(..., min_length=8, max_length=128)
+    
+    @field_validator('new_password')
+    @classmethod
+    def validate_password(cls, v):
+        """Ensure new password meets security requirements."""
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not re.search(r'\d', v):
+            raise ValueError('Password must contain at least one digit')
+        return v
+
+
 router = APIRouter(prefix="/auth", tags=["authentication"])
 security = HTTPBearer()
 
+
+# ============ Email/Password Authentication Endpoints ============
+
+@router.post("/register", response_model=AuthResponse)
+async def register(
+    data: RegisterRequest,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Register a new user with email and password.
+    
+    Validates:
+    - Email format and uniqueness
+    - Password strength (8+ chars, uppercase, lowercase, digit)
+    - Name length (2-100 chars)
+    
+    Returns:
+        JWT access token and user info
+    """
+    # Check if email already exists
+    result = await db.execute(select(User).where(User.email == data.email))
+    existing_user = result.scalar_one_or_none()
+    
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An account with this email already exists"
+        )
+    
+    # Create organization for new user
+    org_subdomain = data.email.split('@')[0].lower().replace('.', '-').replace('_', '-')[:50]
+    # Ensure unique subdomain by appending uuid if needed
+    subdomain_check = await db.execute(
+        select(Organization).where(Organization.subdomain == org_subdomain)
+    )
+    if subdomain_check.scalar_one_or_none():
+        org_subdomain = f"{org_subdomain}-{str(uuid.uuid4())[:8]}"
+    
+    organization = Organization(
+        name=f"{data.full_name}'s Workspace",
+        subdomain=org_subdomain,
+        subscription_tier=SubscriptionTier.FREE,
+        developer_count=1
+    )
+    db.add(organization)
+    await db.flush()
+    
+    # Create user with hashed password
+    user = User(
+        email=data.email,
+        hashed_password=get_password_hash(data.password),
+        full_name=data.full_name,
+        organization_id=organization.id,
+        role=UserRole.ADMIN,
+        is_active=True,
+        is_verified=False  # Email verification can be added later
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    
+    logger.info(f"New user registered: {data.email}")
+    
+    # Create JWT token
+    access_token = create_access_token(
+        data={"sub": str(user.id), "email": user.email}
+    )
+    
+    return AuthResponse(
+        access_token=access_token,
+        user={
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "organization_id": str(user.organization_id),
+            "role": user.role.value
+        }
+    )
+
+
+@router.post("/login", response_model=AuthResponse)
+async def login(
+    data: LoginRequest,
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Login with email and password.
+    
+    Returns:
+        JWT access token and user info
+        
+    Raises:
+        401: Invalid email or password
+    """
+    # Find user by email
+    result = await db.execute(select(User).where(User.email == data.email))
+    user = result.scalar_one_or_none()
+    
+    # Check if user exists and password is correct
+    if not user or not user.hashed_password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
+        )
+    
+    if not verify_password(data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
+        )
+    
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is disabled"
+        )
+    
+    logger.info(f"User logged in: {data.email}")
+    
+    # Update last login
+    user.last_login = None  # Will trigger default timestamp
+    await db.commit()
+    
+    # Create JWT token
+    access_token = create_access_token(
+        data={"sub": str(user.id), "email": user.email}
+    )
+    
+    return AuthResponse(
+        access_token=access_token,
+        user={
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "organization_id": str(user.organization_id),
+            "role": user.role.value,
+            "github_connected": user.github_id is not None
+        }
+    )
+
+
+# ============ GitHub OAuth Endpoints ============
 
 @router.get("/github/login")
 async def github_login():

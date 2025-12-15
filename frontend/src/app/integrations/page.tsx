@@ -16,6 +16,7 @@ import {
     Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import { GlassCard } from "@/components/ui/glass-card";
 
 interface Pipeline {
@@ -81,10 +82,10 @@ export default function CICDPage() {
         setLoading(true);
         try {
             if (activeTab === "pipelines") {
-                const res = await fetch("http://localhost:8000/api/cicd/pipelines");
+                const res = await fetch(`${API_BASE_URL}/api/cicd/pipelines`);
                 if (res.ok) setPipelines(await res.json());
             } else if (activeTab === "builds") {
-                const res = await fetch("http://localhost:8000/api/cicd/builds?limit=20");
+                const res = await fetch(`${API_BASE_URL}/api/cicd/builds?limit=20`);
                 if (res.ok) setBuilds(await res.json());
             }
         } catch (e) {
@@ -98,7 +99,7 @@ export default function CICDPage() {
         setSelectedPipeline(pipeline);
         setActiveTab("config");
         try {
-            const res = await fetch(`http://localhost:8000/api/cicd/pipelines/${pipeline.id}/config`);
+            const res = await fetch(`${API_BASE_URL}/api/cicd/pipelines/${pipeline.id}/config`);
             if (res.ok) {
                 const data = await res.json();
                 setConfigContent(data.content);
@@ -110,7 +111,7 @@ export default function CICDPage() {
 
     const triggerBuild = async (pipelineId: string) => {
         try {
-            await fetch(`http://localhost:8000/api/cicd/pipelines/${pipelineId}/trigger`, {
+            await fetch(`${API_BASE_URL}/api/cicd/pipelines/${pipelineId}/trigger`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ branch: "main" })

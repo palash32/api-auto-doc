@@ -16,6 +16,7 @@ import {
     Send
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import { GlassCard } from "@/components/ui/glass-card";
 
 interface EnterpriseConfig {
@@ -88,19 +89,19 @@ export default function EnterprisePage() {
         setLoading(true);
         try {
             if (activeTab === "overview") {
-                const res = await fetch("http://localhost:8000/api/enterprise/config");
+                const res = await fetch(`${API_BASE_URL}/api/enterprise/config`);
                 if (res.ok) {
                     const data = await res.json();
                     if (data) setConfig(data);
                 }
             } else if (activeTab === "integrations") {
-                const res = await fetch("http://localhost:8000/api/enterprise/integrations");
+                const res = await fetch(`${API_BASE_URL}/api/enterprise/integrations`);
                 if (res.ok) setIntegrations(await res.json());
             } else if (activeTab === "support") {
-                const res = await fetch("http://localhost:8000/api/enterprise/tickets");
+                const res = await fetch(`${API_BASE_URL}/api/enterprise/tickets`);
                 if (res.ok) setTickets(await res.json());
             } else if (activeTab === "sla") {
-                const res = await fetch("http://localhost:8000/api/enterprise/sla");
+                const res = await fetch(`${API_BASE_URL}/api/enterprise/sla`);
                 if (res.ok) setSlaMetrics(await res.json());
             }
         } catch (e) {
@@ -113,7 +114,7 @@ export default function EnterprisePage() {
     const createTicket = async () => {
         if (!newTicketSubject) return;
         try {
-            await fetch("http://localhost:8000/api/enterprise/tickets", {
+            await fetch(`${API_BASE_URL}/api/enterprise/tickets`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ subject: newTicketSubject, priority: "medium" })
@@ -127,7 +128,7 @@ export default function EnterprisePage() {
 
     const deleteIntegration = async (id: string) => {
         try {
-            await fetch(`http://localhost:8000/api/enterprise/integrations/${id}`, {
+            await fetch(`${API_BASE_URL}/api/enterprise/integrations/${id}`, {
                 method: "DELETE"
             });
             fetchData();

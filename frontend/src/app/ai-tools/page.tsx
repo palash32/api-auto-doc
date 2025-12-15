@@ -15,6 +15,7 @@ import {
     Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import { GlassCard } from "@/components/ui/glass-card";
 
 export default function AIToolsPage() {
@@ -62,7 +63,7 @@ export default function AIToolsPage() {
     const enhanceDescription = async () => {
         setLoading(true);
         try {
-            const res = await fetch("http://localhost:8000/api/ai/enhance-description", {
+            const res = await fetch(`${API_BASE_URL}/api/ai/enhance-description`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -83,7 +84,7 @@ export default function AIToolsPage() {
     const generateExamples = async () => {
         setLoading(true);
         try {
-            const res = await fetch("http://localhost:8000/api/ai/generate-examples", {
+            const res = await fetch(`${API_BASE_URL}/api/ai/generate-examples`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -105,7 +106,7 @@ export default function AIToolsPage() {
     const inferTypes = async () => {
         setLoading(true);
         try {
-            const res = await fetch("http://localhost:8000/api/ai/infer-types", {
+            const res = await fetch(`${API_BASE_URL}/api/ai/infer-types`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ code: codeInput, language })

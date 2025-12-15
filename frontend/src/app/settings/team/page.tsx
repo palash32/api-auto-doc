@@ -19,6 +19,7 @@ import {
     Search
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import { GlassCard } from "@/components/ui/glass-card";
 
 interface TeamMember {
@@ -71,8 +72,8 @@ export default function TeamSettingsPage() {
         setLoading(true);
         try {
             const [membersRes, workspacesRes] = await Promise.all([
-                fetch("http://localhost:8000/api/team/members"),
-                fetch("http://localhost:8000/api/team/workspaces")
+                fetch(`${API_BASE_URL}/api/team/members`),
+                fetch(`${API_BASE_URL}/api/team/workspaces`)
             ]);
 
             if (membersRes.ok) {
@@ -92,7 +93,7 @@ export default function TeamSettingsPage() {
         if (!inviteEmail) return;
 
         try {
-            const res = await fetch("http://localhost:8000/api/team/members", {
+            const res = await fetch(`${API_BASE_URL}/api/team/members`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: inviteEmail, role: inviteRole })
@@ -110,7 +111,7 @@ export default function TeamSettingsPage() {
 
     const updateRole = async (memberId: string, role: string) => {
         try {
-            await fetch(`http://localhost:8000/api/team/members/${memberId}`, {
+            await fetch(`${API_BASE_URL}/api/team/members/${memberId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ role })
@@ -125,7 +126,7 @@ export default function TeamSettingsPage() {
         if (!confirm("Are you sure you want to remove this member?")) return;
 
         try {
-            await fetch(`http://localhost:8000/api/team/members/${memberId}`, {
+            await fetch(`${API_BASE_URL}/api/team/members/${memberId}`, {
                 method: "DELETE"
             });
             fetchData();
@@ -138,7 +139,7 @@ export default function TeamSettingsPage() {
         if (!newWorkspaceName) return;
 
         try {
-            const res = await fetch("http://localhost:8000/api/team/workspaces", {
+            const res = await fetch(`${API_BASE_URL}/api/team/workspaces`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

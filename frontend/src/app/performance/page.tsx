@@ -13,6 +13,7 @@ import {
     Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import { GlassCard } from "@/components/ui/glass-card";
 
 interface PerformanceStats {
@@ -67,10 +68,10 @@ export default function PerformancePage() {
     const fetchData = async () => {
         try {
             const [statsRes, rateRes, queueRes, cacheRes] = await Promise.all([
-                fetch("http://localhost:8000/api/performance/dashboard"),
-                fetch("http://localhost:8000/api/performance/rate-limits/status"),
-                fetch("http://localhost:8000/api/performance/queue/stats"),
-                fetch("http://localhost:8000/api/performance/cache/stats")
+                fetch(`${API_BASE_URL}/api/performance/dashboard`),
+                fetch(`${API_BASE_URL}/api/performance/rate-limits/status`),
+                fetch(`${API_BASE_URL}/api/performance/queue/stats`),
+                fetch(`${API_BASE_URL}/api/performance/cache/stats`)
             ]);
 
             if (statsRes.ok) setStats(await statsRes.json());
@@ -86,7 +87,7 @@ export default function PerformancePage() {
 
     const clearCache = async () => {
         try {
-            await fetch("http://localhost:8000/api/performance/cache/clear", {
+            await fetch(`${API_BASE_URL}/api/performance/cache/clear`, {
                 method: "POST"
             });
             fetchData();

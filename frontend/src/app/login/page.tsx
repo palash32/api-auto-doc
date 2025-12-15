@@ -2,12 +2,12 @@
 
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { API_BASE_URL } from "@/lib/api";
 
 export default function LoginPage() {
     useEffect(() => {
         // Redirect to backend GitHub OAuth endpoint
-        const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, '');
-        window.location.href = `${API_URL}/api/auth/github/login`;
+        window.location.href = `${API_BASE_URL}/api/auth/github/login`;
     }, []);
 
     return (

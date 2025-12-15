@@ -17,6 +17,7 @@ import {
     RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import { GlassCard } from "@/components/ui/glass-card";
 
 interface AuditLog {
@@ -85,16 +86,16 @@ export default function SecurityPage() {
         setLoading(true);
         try {
             if (activeTab === "audit") {
-                const res = await fetch("http://localhost:8000/api/security/audit-logs?limit=50");
+                const res = await fetch(`${API_BASE_URL}/api/security/audit-logs?limit=50`);
                 if (res.ok) setAuditLogs(await res.json());
             } else if (activeTab === "ip") {
-                const res = await fetch("http://localhost:8000/api/security/ip-whitelist");
+                const res = await fetch(`${API_BASE_URL}/api/security/ip-whitelist`);
                 if (res.ok) setIpWhitelist(await res.json());
             } else if (activeTab === "api-keys") {
-                const res = await fetch("http://localhost:8000/api/security/api-keys");
+                const res = await fetch(`${API_BASE_URL}/api/security/api-keys`);
                 if (res.ok) setApiKeys(await res.json());
             } else if (activeTab === "settings") {
-                const res = await fetch("http://localhost:8000/api/security/settings");
+                const res = await fetch(`${API_BASE_URL}/api/security/settings`);
                 if (res.ok) setSettings(await res.json());
             }
         } catch (e) {
@@ -107,7 +108,7 @@ export default function SecurityPage() {
     const createApiKey = async () => {
         if (!newKeyName) return;
         try {
-            const res = await fetch("http://localhost:8000/api/security/api-keys", {
+            const res = await fetch(`${API_BASE_URL}/api/security/api-keys`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name: newKeyName, scopes: ["read", "write"] })
@@ -125,7 +126,7 @@ export default function SecurityPage() {
 
     const revokeApiKey = async (keyId: string) => {
         try {
-            await fetch(`http://localhost:8000/api/security/api-keys/${keyId}`, {
+            await fetch(`${API_BASE_URL}/api/security/api-keys/${keyId}`, {
                 method: "DELETE"
             });
             fetchData();
@@ -137,7 +138,7 @@ export default function SecurityPage() {
     const addIp = async () => {
         if (!newIp) return;
         try {
-            await fetch("http://localhost:8000/api/security/ip-whitelist", {
+            await fetch(`${API_BASE_URL}/api/security/ip-whitelist`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ip_address: newIp, label: newIpLabel || null })
@@ -152,7 +153,7 @@ export default function SecurityPage() {
 
     const removeIp = async (entryId: string) => {
         try {
-            await fetch(`http://localhost:8000/api/security/ip-whitelist/${entryId}`, {
+            await fetch(`${API_BASE_URL}/api/security/ip-whitelist/${entryId}`, {
                 method: "DELETE"
             });
             fetchData();

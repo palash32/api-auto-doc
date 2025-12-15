@@ -19,6 +19,7 @@ import {
     ArrowLeftRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import { GlassCard } from "@/components/ui/glass-card";
 
 interface APIVersion {
@@ -76,7 +77,7 @@ export default function VersionHistoryPage() {
     const fetchVersions = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`http://localhost:8000/api/repositories/${repositoryId}/versions`);
+            const res = await fetch(`${API_BASE_URL}/api/repositories/${repositoryId}/versions`);
             if (res.ok) {
                 setVersions(await res.json());
             }
@@ -93,8 +94,8 @@ export default function VersionHistoryPage() {
         // Fetch changes
         try {
             const [changesRes, changelogRes] = await Promise.all([
-                fetch(`http://localhost:8000/api/versions/${version.id}/changes`),
-                fetch(`http://localhost:8000/api/versions/${version.id}/changelog`)
+                fetch(`${API_BASE_URL}/api/versions/${version.id}/changes`),
+                fetch(`${API_BASE_URL}/api/versions/${version.id}/changelog`)
             ]);
 
             if (changesRes.ok) {

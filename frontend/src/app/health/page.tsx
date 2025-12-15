@@ -15,6 +15,7 @@ import {
     ChevronRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import { GlassCard } from "@/components/ui/glass-card";
 
 interface HealthDashboard {
@@ -63,8 +64,8 @@ export default function HealthDashboardPage() {
         setLoading(true);
         try {
             const [dashRes, alertsRes] = await Promise.all([
-                fetch("http://localhost:8000/api/health/dashboard"),
-                fetch("http://localhost:8000/api/health/alerts?resolved=false&limit=10")
+                fetch(`${API_BASE_URL}/api/health/dashboard`),
+                fetch(`${API_BASE_URL}/api/health/alerts?resolved=false&limit=10`)
             ]);
 
             if (dashRes.ok) {
@@ -86,7 +87,7 @@ export default function HealthDashboardPage() {
         setCheckResult(null);
 
         try {
-            const res = await fetch("http://localhost:8000/api/health/check", {
+            const res = await fetch(`${API_BASE_URL}/api/health/check`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ url: checkUrl, method: "GET" })
@@ -104,7 +105,7 @@ export default function HealthDashboardPage() {
 
     const resolveAlert = async (alertId: string) => {
         try {
-            await fetch(`http://localhost:8000/api/health/alerts/${alertId}/resolve`, {
+            await fetch(`${API_BASE_URL}/api/health/alerts/${alertId}/resolve`, {
                 method: "POST"
             });
             fetchData();

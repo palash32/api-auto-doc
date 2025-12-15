@@ -16,6 +16,7 @@ import {
     Star
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import { GlassCard } from "@/components/ui/glass-card";
 
 interface Plan {
@@ -89,10 +90,10 @@ export default function BillingPage() {
         setLoading(true);
         try {
             const [plansRes, subRes, invoicesRes, methodsRes] = await Promise.all([
-                fetch("http://localhost:8000/api/billing/plans"),
-                fetch("http://localhost:8000/api/billing/subscription"),
-                fetch("http://localhost:8000/api/billing/invoices"),
-                fetch("http://localhost:8000/api/billing/payment-methods")
+                fetch(`${API_BASE_URL}/api/billing/plans`),
+                fetch(`${API_BASE_URL}/api/billing/subscription`),
+                fetch(`${API_BASE_URL}/api/billing/invoices`),
+                fetch(`${API_BASE_URL}/api/billing/payment-methods`)
             ]);
 
             if (plansRes.ok) setPlans(await plansRes.json());
@@ -111,7 +112,7 @@ export default function BillingPage() {
 
     const subscribe = async (planId: string) => {
         try {
-            const res = await fetch("http://localhost:8000/api/billing/subscription", {
+            const res = await fetch(`${API_BASE_URL}/api/billing/subscription`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ plan_id: planId, billing_interval: billingInterval })
@@ -127,7 +128,7 @@ export default function BillingPage() {
     const cancelSubscription = async () => {
         if (!confirm("Are you sure you want to cancel your subscription?")) return;
         try {
-            await fetch("http://localhost:8000/api/billing/subscription/cancel", {
+            await fetch(`${API_BASE_URL}/api/billing/subscription/cancel`, {
                 method: "POST"
             });
             fetchData();

@@ -14,6 +14,7 @@ import {
     ExternalLink
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import { GlassCard } from "@/components/ui/glass-card";
 
 interface Job {
@@ -65,8 +66,8 @@ export default function ImportExportPage() {
     const fetchJobs = async () => {
         try {
             const [importRes, exportRes] = await Promise.all([
-                fetch("http://localhost:8000/api/import/jobs"),
-                fetch("http://localhost:8000/api/export/jobs")
+                fetch(`${API_BASE_URL}/api/import/jobs`),
+                fetch(`${API_BASE_URL}/api/export/jobs`)
             ]);
             if (importRes.ok) setImportJobs(await importRes.json());
             if (exportRes.ok) setExportJobs(await exportRes.json());
@@ -81,7 +82,7 @@ export default function ImportExportPage() {
         setResult(null);
 
         try {
-            const res = await fetch("http://localhost:8000/api/import", {
+            const res = await fetch(`${API_BASE_URL}/api/import`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -109,7 +110,7 @@ export default function ImportExportPage() {
         setLoading(true);
 
         try {
-            const res = await fetch("http://localhost:8000/api/export", {
+            const res = await fetch(`${API_BASE_URL}/api/export`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -122,7 +123,7 @@ export default function ImportExportPage() {
             if (res.ok) {
                 const data = await res.json();
                 if (data.output_url) {
-                    window.open(`http://localhost:8000${data.output_url}`, "_blank");
+                    window.open(`${API_BASE_URL}${data.output_url}`, "_blank");
                 }
             }
         } catch (e) {

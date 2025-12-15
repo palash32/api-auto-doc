@@ -15,6 +15,7 @@ import {
     Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import { GlassCard } from "@/components/ui/glass-card";
 
 interface DashboardSummary {
@@ -69,8 +70,8 @@ export default function AnalyticsDashboard() {
         setLoading(true);
         try {
             const [summaryRes, healthRes] = await Promise.all([
-                fetch(`http://localhost:8000/api/analytics/dashboard?days=${timeRange}`),
-                fetch("http://localhost:8000/api/analytics/health")
+                fetch(`${API_BASE_URL}/api/analytics/dashboard?days=${timeRange}`),
+                fetch(`${API_BASE_URL}/api/analytics/health`)
             ]);
 
             if (summaryRes.ok) {

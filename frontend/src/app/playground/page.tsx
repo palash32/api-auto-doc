@@ -18,6 +18,7 @@ import {
     Unlock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import { GlassCard } from "@/components/ui/glass-card";
 
 // HTTP method colors
@@ -135,7 +136,7 @@ export default function PlaygroundPage() {
                 headersObj[h.key] = h.value;
             });
 
-            const res = await fetch("http://localhost:8000/api/playground/proxy", {
+            const res = await fetch(`${API_BASE_URL}/api/playground/proxy`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
