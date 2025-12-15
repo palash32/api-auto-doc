@@ -78,7 +78,7 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://localhost:3001",
         "https://api-auto-doc.vercel.app",
-        "https://api-auto-doc-palash32s-projects.vercel.app"
+        "https://api-auto-docmentation-frontend.vercel.app"
     ]
     ALLOWED_HOSTS: List[str] = ["localhost", "127.0.0.1", "api-auto-doc.onrender.com"]
     
@@ -113,7 +113,7 @@ class Settings(BaseSettings):
     def parse_cors_origins(cls, v):
         """Parse CORS origins from string or list."""
         if v is None:
-            return ["http://localhost:3000", "https://api-auto-doc.vercel.app"]
+            return ["http://localhost:3000", "https://api-auto-docmentation-frontend.vercel.app"]
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
         return v
