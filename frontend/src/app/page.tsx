@@ -225,12 +225,9 @@ export default function LandingPage() {
                         <Link href="/docs" className="hover:text-white transition-colors">Documentation</Link>
                     </div>
                     <div className="flex items-center gap-4">
-                        <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-white transition-colors hidden sm:block">
-                            Sign In
-                        </Link>
-                        <Link href="/dashboard">
+                        <Link href="/login">
                             <MagneticButton className="px-5 py-2 text-sm">
-                                Get Started
+                                Sign In
                             </MagneticButton>
                         </Link>
                     </div>
@@ -263,7 +260,7 @@ export default function LandingPage() {
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
-                        <Link href="/dashboard" className="hero-cta">
+                        <Link href="/login" className="hero-cta">
                             <MagneticButton className="px-8 py-4 text-lg shadow-[0_0_30px_rgba(0,113,227,0.3)]">
                                 Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
                             </MagneticButton>
