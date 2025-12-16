@@ -18,7 +18,8 @@ import {
     Shield,
     Menu,
     Bell,
-    Play
+    Play,
+    Github
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -225,6 +226,7 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [githubConnected, setGithubConnected] = useState(true); // Default true to hide button until we know
     const [mounted, setMounted] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [showNotifications, setShowNotifications] = useState(false);
@@ -263,7 +265,23 @@ export default function DashboardPage() {
         // Mark as mounted for hydration-safe client-only features
         setMounted(true);
         // Check authentication status on client side only
-        setIsAuthenticated(!!localStorage.getItem('token'));
+        const token = localStorage.getItem('token');
+        setIsAuthenticated(!!token);
+
+        // Fetch user info to check GitHub connection status
+        if (token) {
+            fetch(`${API_BASE_URL}/api/auth/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+                .then(res => res.ok ? res.json() : null)
+                .then(user => {
+                    if (user) {
+                        setGithubConnected(user.github_connected ?? false);
+                    }
+                })
+                .catch(() => setGithubConnected(false));
+        }
+
         fetchRepos();
     }, []);
 
@@ -368,6 +386,17 @@ export default function DashboardPage() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Connect GitHub Button - Only show for email users */}
+                        {!githubConnected && (
+                            <button
+                                onClick={() => window.location.href = `${API_BASE_URL}/api/auth/github/login`}
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 text-white/80 hover:text-white"
+                            >
+                                <Github size={18} />
+                                <span className="text-sm font-medium">Connect GitHub</span>
+                            </button>
+                        )}
 
                         <div className="relative">
                             <button

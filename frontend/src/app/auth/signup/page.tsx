@@ -21,6 +21,10 @@ const signUpSchema = z.object({
         .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
         .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
         .regex(/\d/, 'Password must contain at least one digit'),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
 });
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
@@ -35,7 +39,7 @@ const passwordRequirements = [
 
 export default function SignUpPage() {
     const router = useRouter();
-    const [formData, setFormData] = useState<SignUpFormData>({ full_name: '', email: '', password: '' });
+    const [formData, setFormData] = useState<SignUpFormData>({ full_name: '', email: '', password: '', confirmPassword: '' });
     const [errors, setErrors] = useState<Partial<Record<keyof SignUpFormData, string>>>({});
     const [loading, setLoading] = useState(false);
     const [apiError, setApiError] = useState('');
@@ -217,6 +221,24 @@ export default function SignUpPage() {
                             </div>
                         )}
                         {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
+                    </div>
+
+                    {/* Confirm Password */}
+                    <div>
+                        <label className="block text-sm font-medium text-white/70 mb-1.5">Confirm Password</label>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                name="confirmPassword"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                placeholder="••••••••"
+                                className={`w-full pl-10 pr-4 py-3 rounded-lg bg-white/5 border ${errors.confirmPassword ? 'border-red-500' : 'border-white/10'
+                                    } text-white placeholder-white/30 focus:outline-none focus:border-purple-500 transition-all`}
+                            />
+                        </div>
+                        {errors.confirmPassword && <p className="mt-1 text-sm text-red-400">{errors.confirmPassword}</p>}
                     </div>
 
                     {/* API Error */}

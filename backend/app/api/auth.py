@@ -666,5 +666,6 @@ async def get_current_user(
         "full_name": user.full_name,
         "role": user.role,
         "organization_id": str(user.organization_id),
-        "is_verified": user.is_verified
+        "is_verified": user.is_verified,
+        "github_connected": user.github_id is not None
     }
