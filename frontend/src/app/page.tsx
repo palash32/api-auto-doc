@@ -259,15 +259,12 @@ export default function LandingPage() {
                         Save weeks of debugging time with AI-powered insights.
                     </p>
 
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+                    <div className="flex items-center justify-center mb-20">
                         <Link href="/login" className="hero-cta">
                             <MagneticButton className="px-8 py-4 text-lg shadow-[0_0_30px_rgba(0,113,227,0.3)]">
                                 Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
                             </MagneticButton>
                         </Link>
-                        <button className="hero-cta px-8 py-4 rounded-full font-medium text-white bg-white/5 border border-white/10 hover:bg-white/10 transition-all backdrop-blur-sm">
-                            Watch Demo
-                        </button>
                     </div>
 
                     {/* Live Code-to-Docs Demo */}
