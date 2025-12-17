@@ -426,13 +426,143 @@ async def get_queue_stats(
     )
     stats = {s.status: s.count for s in result.all()}
     
+    # Also get stuck jobs count (processing for > 30 min)
+    stuck_cutoff = datetime.utcnow() - timedelta(minutes=30)
+    stuck_result = await db.execute(
+        select(func.count(BuildQueue.id))
+        .where(
+            BuildQueue.status == "processing",
+            BuildQueue.started_at < stuck_cutoff
+        )
+    )
+    stuck_count = stuck_result.scalar() or 0
+    
     return {
         "pending": stats.get("pending", 0),
         "processing": stats.get("processing", 0),
         "completed": stats.get("completed", 0),
         "failed": stats.get("failed", 0),
+        "stuck": stuck_count,
         "total": sum(stats.values())
     }
+
+
+@router.post("/performance/queue/recover-stuck")
+async def recover_stuck_jobs(
+    max_age_minutes: int = Query(default=30, ge=5, le=120),
+    current_user: dict = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """
+    Recover jobs that are stuck in 'processing' state.
+    
+    Jobs stuck for longer than max_age_minutes are reset to 'pending'
+    with an incremented retry count.
+    """
+    stuck_cutoff = datetime.utcnow() - timedelta(minutes=max_age_minutes)
+    
+    # Find stuck jobs
+    result = await db.execute(
+        select(BuildQueue)
+        .where(
+            BuildQueue.status == "processing",
+            BuildQueue.started_at < stuck_cutoff
+        )
+    )
+    stuck_jobs = result.scalars().all()
+    
+    recovered = 0
+    failed = 0
+    
+    for job in stuck_jobs:
+        if job.retry_count >= job.max_retries:
+            # Max retries exceeded, mark as failed
+            job.status = "failed"
+            job.error_message = f"Max retries ({job.max_retries}) exceeded after stuck recovery"
+            job.completed_at = datetime.utcnow()
+            failed += 1
+        else:
+            # Reset to pending for retry
+            job.status = "pending"
+            job.retry_count += 1
+            job.worker_id = None
+            job.started_at = None
+            job.error_message = f"Recovered from stuck state (attempt {job.retry_count})"
+            recovered += 1
+    
+    await db.commit()
+    
+    return {
+        "message": f"Processed {len(stuck_jobs)} stuck jobs",
+        "recovered": recovered,
+        "failed_max_retries": failed,
+        "cutoff_minutes": max_age_minutes
+    }
+
+
+@router.post("/performance/queue/{job_id}/retry")
+async def retry_failed_job(
+    job_id: str,
+    current_user: dict = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Retry a failed job by resetting it to pending."""
+    result = await db.execute(
+        select(BuildQueue).where(BuildQueue.id == job_id)
+    )
+    job = result.scalar_one_or_none()
+    
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    if job.status not in ["failed", "processing"]:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot retry job with status '{job.status}'"
+        )
+    
+    # Reset job for retry
+    job.status = "pending"
+    job.retry_count += 1
+    job.worker_id = None
+    job.started_at = None
+    job.completed_at = None
+    job.error_message = None
+    
+    await db.commit()
+    
+    return {
+        "message": "Job reset for retry",
+        "job_id": str(job.id),
+        "retry_count": job.retry_count
+    }
+
+
+@router.delete("/performance/queue/{job_id}")
+async def cancel_job(
+    job_id: str,
+    current_user: dict = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_async_db)
+):
+    """Cancel a pending or failed job."""
+    result = await db.execute(
+        select(BuildQueue).where(BuildQueue.id == job_id)
+    )
+    job = result.scalar_one_or_none()
+    
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    if job.status == "processing":
+        raise HTTPException(
+            status_code=400, 
+            detail="Cannot cancel a job that is currently processing"
+        )
+    
+    await db.delete(job)
+    await db.commit()
+    
+    return {"message": "Job cancelled", "job_id": job_id}
 
 
 # ==================== Performance Metrics ====================
