@@ -246,26 +246,97 @@ class ScanService:
     async def _process_single_file(self, file_info: Dict) -> List[Dict]:
         """
         Process a single file to extract API endpoints.
-        Uses AI to generate documentation for detected endpoints.
+        Uses AI if available, otherwise falls back to regex extraction.
         """
         content = file_info.get("_content", "")
         if not content:
             return []
-            
-        try:
-            # Call AI service to extract and document endpoints
-            doc_result = await self.ai_service.generate_doc(content, file_info["language"])
-            
-            if doc_result and doc_result.get("path"):
-                # Add file location metadata
-                doc_result["_file_path"] = file_info["path"]
-                doc_result["_language"] = file_info["language"]
-                return [doc_result]
+        
+        endpoints = []
+        
+        # Try AI first (if configured)
+        if self.ai_service.model:
+            try:
+                doc_result = await self.ai_service.generate_doc(content, file_info["language"])
                 
-        except Exception as e:
-            logger.debug(f"AI processing failed for {file_info['path']}: {e}")
+                if doc_result and doc_result.get("path"):
+                    doc_result["_file_path"] = file_info["path"]
+                    doc_result["_language"] = file_info["language"]
+                    return [doc_result]
+                    
+            except Exception as e:
+                logger.debug(f"AI processing failed for {file_info['path']}: {e}")
+        
+        # Fallback: Regex-based extraction (always works, no API needed)
+        endpoints = self._extract_endpoints_regex(content, file_info)
+        
+        if endpoints:
+            logger.info(f"📍 Found {len(endpoints)} endpoints in {file_info['path']} (regex)")
+        
+        return endpoints
+
+    def _extract_endpoints_regex(self, content: str, file_info: Dict) -> List[Dict]:
+        """
+        Extract API endpoints using regex patterns when AI is not available.
+        This provides basic but reliable endpoint detection.
+        """
+        endpoints = []
+        language = file_info.get("language", "")
+        file_path = file_info.get("path", "")
+        
+        # Python patterns: @app.get("/path"), @router.post("/path")
+        if language == "python":
+            # FastAPI/Flask decorators
+            pattern = r'@(?:app|router|blueprint)\.(get|post|put|delete|patch)\s*\(\s*["\']([^"\']+)["\']'
+            for match in re.finditer(pattern, content, re.IGNORECASE):
+                method = match.group(1).upper()
+                path = match.group(2)
+                endpoints.append(self._create_endpoint_doc(path, method, file_path, "python"))
             
-        return []
+            # Flask route
+            pattern = r'@(?:app|blueprint)\.route\s*\(\s*["\']([^"\']+)["\']'
+            for match in re.finditer(pattern, content, re.IGNORECASE):
+                path = match.group(1)
+                endpoints.append(self._create_endpoint_doc(path, "GET", file_path, "python"))
+        
+        # JavaScript/TypeScript patterns: app.get('/path', ...), router.post('/path', ...)
+        elif language in ["javascript", "typescript"]:
+            # Express patterns
+            pattern = r'(?:app|router)\s*\.\s*(get|post|put|delete|patch)\s*\(\s*["\']([^"\']+)["\']'
+            for match in re.finditer(pattern, content, re.IGNORECASE):
+                method = match.group(1).upper()
+                path = match.group(2)
+                endpoints.append(self._create_endpoint_doc(path, method, file_path, "express"))
+            
+            # NestJS decorators
+            pattern = r'@(Get|Post|Put|Delete|Patch)\s*\(\s*["\']?([^"\')\s]*)["\']?\s*\)'
+            for match in re.finditer(pattern, content):
+                method = match.group(1).upper()
+                path = match.group(2) or "/"
+                endpoints.append(self._create_endpoint_doc(path, method, file_path, "nestjs"))
+        
+        # Go patterns: r.GET("/path", ...), e.POST("/path", ...)
+        elif language == "go":
+            pattern = r'(?:r|router|e|app|group)\s*\.\s*(GET|POST|PUT|DELETE|PATCH)\s*\(\s*["\']([^"\']+)["\']'
+            for match in re.finditer(pattern, content):
+                method = match.group(1).upper()
+                path = match.group(2)
+                endpoints.append(self._create_endpoint_doc(path, method, file_path, "go"))
+        
+        return endpoints
+    
+    def _create_endpoint_doc(self, path: str, method: str, file_path: str, framework: str) -> Dict:
+        """Create a standardized endpoint document."""
+        return {
+            "path": path,
+            "method": method,
+            "summary": f"{method} {path}",
+            "description": f"API endpoint detected in {file_path}",
+            "tags": [framework],
+            "auth_required": "auth" in path.lower() or "user" in path.lower(),
+            "_file_path": file_path,
+            "_language": framework
+        }
 
     async def _save_endpoints_bulk(self, db: AsyncSession, repo_id: UUID, endpoints: List[Dict]):
         """
