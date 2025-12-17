@@ -24,8 +24,8 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.VERSION,
     description="Automatically discover, document, and monitor all APIs across your organization's codebase",
-    docs_url="/docs" if settings.is_development else None,
-    redoc_url="/redoc" if settings.is_development else None,
+    docs_url="/docs",  # Swagger UI - enabled in all environments
+    redoc_url="/redoc",  # ReDoc - enabled in all environments
 )
 
 @app.on_event("startup")
