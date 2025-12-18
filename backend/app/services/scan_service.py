@@ -80,10 +80,8 @@ class ScanService:
         1. Clone repository
         2. Scan all files (fast file system walk)
         3. Filter to code files (python, js, ts, go, java, csharp)
-        4. Pre-filter with regex (only files matching API patterns)
-        5. Process in parallel batches
-        6. AI enhancement for detected endpoints
-        7. Bulk save to database
+        4. Process ALL code files (regex + AI if available)
+        5. Bulk save to database
         """
         logger.info(f"🚀 Starting enterprise scan for repository {repo_id}")
         scan_start = datetime.now()
@@ -98,38 +96,60 @@ class ScanService:
                 repo = result.scalar_one_or_none()
                 
                 if not repo:
-                    logger.error(f"Repository {repo_id} not found")
+                    logger.error(f"❌ Repository {repo_id} not found in database")
                     return
 
                 # Update status
                 repo.scan_status = ScanStatus.SCANNING
                 repo.last_scanned = datetime.now()
                 await db.commit()
-                logger.info(f"📂 Scanning: {repo.full_name}")
+                logger.info(f"📂 Scanning: {repo.full_name} (URL: {repo.repo_url})")
 
                 # Get access token if available
                 token = self._get_access_token(repo)
+                logger.info(f"🔑 Token available: {bool(token)}")
 
                 # 2. Clone Repository
+                logger.info(f"📥 Step 2: Cloning repository...")
                 repo_path = await self._clone_repository(db, repo, token)
                 if not repo_path:
+                    logger.error(f"❌ Clone failed, aborting scan")
                     return
+                logger.info(f"✅ Cloned to: {repo_path}")
 
-                # 3. Scan All Files
+                # 3. Scan All Files  
+                logger.info(f"📁 Step 3: Scanning files...")
                 files = self.scanner.scan_repository(repo_path)
                 total_files = len(files)
-                logger.info(f"📁 Found {total_files} files in {repo.full_name}")
+                logger.info(f"📁 Found {total_files} total files")
 
-                # 4. Filter to API-likely files
-                api_candidates = self._filter_api_candidates(files, repo_path)
-                logger.info(f"🔍 Pre-filtered to {len(api_candidates)} API candidates (from {total_files} files)")
+                # 4. Filter to code files ONLY (no pre-filter for API patterns)
+                code_files = self._get_code_files(files, repo_path)
+                logger.info(f"🔍 Step 4: Found {len(code_files)} code files to process")
+                
+                if len(code_files) == 0:
+                    logger.warning(f"⚠️ No code files found in repository!")
+                    # List what file types were found
+                    langs = {}
+                    for f in files:
+                        lang = f.get("language", "unknown")
+                        langs[lang] = langs.get(lang, 0) + 1
+                    logger.info(f"File types found: {langs}")
 
-                # 5. Process in Parallel Batches
-                all_endpoints = await self._process_files_parallel(api_candidates, repo_path)
+                # 5. Process Files (regex extraction + AI if available)
+                logger.info(f"⚙️ Step 5: Processing {len(code_files)} files...")
+                logger.info(f"🤖 AI available: {bool(self.ai_service.model)}")
+                
+                all_endpoints = await self._process_files_parallel(code_files, repo_path)
                 logger.info(f"✅ Detected {len(all_endpoints)} API endpoints")
 
                 # 6. Save to Database (bulk)
-                await self._save_endpoints_bulk(db, repo.id, all_endpoints)
+                if all_endpoints:
+                    logger.info(f"💾 Step 6: Saving {len(all_endpoints)} endpoints to database...")
+                    await self._save_endpoints_bulk(db, repo.id, all_endpoints)
+                    logger.info(f"✅ Saved endpoints to database")
+                else:
+                    logger.warning(f"⚠️ No endpoints detected to save")
 
                 # 7. Mark Success
                 scan_duration = (datetime.now() - scan_start).total_seconds()
@@ -150,6 +170,7 @@ class ScanService:
                 if repo:
                     try:
                         self.git_service.delete_repository(repo.full_name)
+                        logger.info(f"🧹 Cleaned up cloned repo")
                     except Exception as e:
                         logger.warning(f"Failed to cleanup {repo.full_name}: {e}")
 
@@ -175,7 +196,36 @@ class ScanService:
             await self._fail_scan(db, repo, f"Clone failed: {str(e)}")
             return None
 
-    def _filter_api_candidates(self, files: List[Dict], repo_path: Path) -> List[Dict]:
+    def _get_code_files(self, files: List[Dict], repo_path: Path) -> List[Dict]:
+        """
+        Get all code files (no aggressive API pre-filtering).
+        This ensures all potential API files are processed by the regex extractor.
+        """
+        SUPPORTED_LANGUAGES = ["python", "javascript", "typescript", "go", "java", "csharp"]
+        code_files = []
+        
+        for file_info in files:
+            # Only process supported languages
+            if file_info.get("language") not in SUPPORTED_LANGUAGES:
+                continue
+                
+            # Skip files that are too small or too large
+            size = file_info.get("size", 0)
+            if size < self.MIN_FILE_SIZE or size > self.MAX_FILE_SIZE:
+                continue
+
+            # Load file content (needed for regex extraction)
+            try:
+                content = self.scanner.get_file_content(repo_path, file_info["path"])
+                if content:
+                    file_info["_content"] = content
+                    code_files.append(file_info)
+                    logger.debug(f"📄 Loaded: {file_info['path']} ({len(content)} bytes)")
+            except Exception as e:
+                logger.debug(f"Skipping {file_info['path']}: {e}")
+                continue
+                
+        return code_files
         """
         Pre-filter files using fast regex patterns.
         This reduces files sent to AI by ~80%.
