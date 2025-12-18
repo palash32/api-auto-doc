@@ -118,23 +118,40 @@ async def register(
             detail="An account with this email already exists"
         )
     
-    # Create organization for new user
-    org_subdomain = data.email.split('@')[0].lower().replace('.', '-').replace('_', '-')[:50]
-    # Ensure unique subdomain by appending uuid if needed
-    subdomain_check = await db.execute(
-        select(Organization).where(Organization.subdomain == org_subdomain)
-    )
-    if subdomain_check.scalar_one_or_none():
-        org_subdomain = f"{org_subdomain}-{str(uuid.uuid4())[:8]}"
+    # Check if organization exists for this email domain (share orgs by domain)
+    email_domain = data.email.split('@')[1].lower()
     
-    organization = Organization(
-        name=f"{data.full_name}'s Workspace",
-        subdomain=org_subdomain,
-        subscription_tier=SubscriptionTier.FREE,
-        developer_count=1
+    # Look for existing users with same domain to join their org
+    domain_pattern = f"%@{email_domain}"
+    result = await db.execute(
+        select(User).where(User.email.ilike(domain_pattern)).limit(1)
     )
-    db.add(organization)
-    await db.flush()
+    existing_domain_user = result.scalar_one_or_none()
+    
+    if existing_domain_user and existing_domain_user.organization_id:
+        # Join existing organization
+        organization = await db.get(Organization, existing_domain_user.organization_id)
+        if organization:
+            organization.developer_count = (organization.developer_count or 0) + 1
+            logger.info(f"User {data.email} joining existing org: {organization.name}")
+    else:
+        # Create new organization for this domain
+        org_subdomain = email_domain.split('.')[0][:50]
+        subdomain_check = await db.execute(
+            select(Organization).where(Organization.subdomain == org_subdomain)
+        )
+        if subdomain_check.scalar_one_or_none():
+            org_subdomain = f"{org_subdomain}-{str(uuid.uuid4())[:8]}"
+        
+        organization = Organization(
+            name=f"{email_domain} Workspace",
+            subdomain=org_subdomain,
+            subscription_tier=SubscriptionTier.FREE,
+            developer_count=1
+        )
+        db.add(organization)
+        await db.flush()
+        logger.info(f"Created new org for domain {email_domain}: {organization.name}")
     
     # Create user with hashed password
     user = User(
@@ -388,15 +405,40 @@ async def github_callback(
             logger.info(f"Migrated user {email} to use github_id {github_id}")
     
     if not user:
-        # Create organization (MVP: one org per user)
-        organization = Organization(
-            name=f"{github_username}'s Workspace",
-            subdomain=github_username.lower().replace("_", "-"),
-            subscription_tier=SubscriptionTier.FREE,
-            developer_count=1
+        # Check if organization exists for this email domain (share orgs by domain)
+        email_domain = email.split('@')[1].lower() if '@' in email else 'github.com'
+        
+        # Look for existing users with same domain to join their org
+        domain_pattern = f"%@{email_domain}"
+        result = await db.execute(
+            select(User).where(User.email.ilike(domain_pattern)).limit(1)
         )
-        db.add(organization)
-        await db.flush()  # Get org ID
+        existing_domain_user = result.scalar_one_or_none()
+        
+        if existing_domain_user and existing_domain_user.organization_id:
+            # Join existing organization
+            organization = await db.get(Organization, existing_domain_user.organization_id)
+            if organization:
+                organization.developer_count = (organization.developer_count or 0) + 1
+                logger.info(f"GitHub user {email} joining existing org: {organization.name}")
+        else:
+            # Create new organization for this domain
+            org_subdomain = github_username.lower().replace("_", "-")[:50]
+            subdomain_check = await db.execute(
+                select(Organization).where(Organization.subdomain == org_subdomain)
+            )
+            if subdomain_check.scalar_one_or_none():
+                org_subdomain = f"{org_subdomain}-{str(uuid.uuid4())[:8]}"
+            
+            organization = Organization(
+                name=f"{email_domain} Workspace" if email_domain != 'users.noreply.github.com' else f"{github_username}'s Workspace",
+                subdomain=org_subdomain,
+                subscription_tier=SubscriptionTier.FREE,
+                developer_count=1
+            )
+            db.add(organization)
+            await db.flush()
+            logger.info(f"Created new org for GitHub user: {organization.name}")
         
         # Create user with GitHub ID for reliable future lookups
         user = User(
