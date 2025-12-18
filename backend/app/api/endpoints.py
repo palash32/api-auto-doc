@@ -40,7 +40,7 @@ async def list_repository_endpoints(
     repo_result = await db.execute(
         select(Repository).where(
             Repository.id == repo_id,
-            Repository.organization_id == UUID(current_user["sub"])
+            Repository.organization_id == UUID(current_user["organization_id"])
         )
     )
     repo = repo_result.scalar_one_or_none()
@@ -101,7 +101,7 @@ async def get_endpoint_detail(
         .join(Repository)
         .where(
             APIEndpoint.id == endpoint_id,
-            Repository.organization_id == UUID(current_user["sub"])
+            Repository.organization_id == UUID(current_user["organization_id"])
         )
     )
     endpoint = result.scalar_one_or_none()
@@ -130,7 +130,7 @@ async def update_endpoint_documentation(
         .join(Repository)
         .where(
             APIEndpoint.id == endpoint_id,
-            Repository.organization_id == UUID(current_user["sub"])
+            Repository.organization_id == UUID(current_user["organization_id"])
         )
     )
     endpoint = result.scalar_one_or_none()
