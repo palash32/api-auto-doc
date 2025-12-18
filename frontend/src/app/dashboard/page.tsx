@@ -45,8 +45,9 @@ const HEALTH_STATS = [
 
 // --- Components ---
 
-const Sidebar = ({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed: (v: boolean) => void }) => {
+const Sidebar = ({ collapsed, setCollapsed, userName }: { collapsed: boolean; setCollapsed: (v: boolean) => void; userName: string }) => {
     const sidebarRef = useRef(null);
+    const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
 
     useGSAP(() => {
         gsap.to(sidebarRef.current, {
@@ -109,10 +110,10 @@ const Sidebar = ({ collapsed, setCollapsed }: { collapsed: boolean; setCollapsed
             <div className="p-4 border-t border-white/10">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold shadow-lg">
-                        US
+                        {initials}
                     </div>
                     <div className={cn("transition-opacity duration-300", collapsed ? "opacity-0 w-0 hidden" : "opacity-100")}>
-                        <p className="text-sm font-medium text-white">UniSpark</p>
+                        <p className="text-sm font-medium text-white">{userName}</p>
                         <p className="text-xs text-gray-400">Pro Plan</p>
                     </div>
                 </div>
@@ -227,6 +228,8 @@ export default function DashboardPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [githubConnected, setGithubConnected] = useState(true); // Default true to hide button until we know
+    const [userName, setUserName] = useState("User");
+    const [userEmail, setUserEmail] = useState("");
     const [mounted, setMounted] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [showNotifications, setShowNotifications] = useState(false);
@@ -277,6 +280,8 @@ export default function DashboardPage() {
                 .then(user => {
                     if (user) {
                         setGithubConnected(user.github_connected ?? false);
+                        setUserName(user.full_name || user.email?.split('@')[0] || 'User');
+                        setUserEmail(user.email || '');
                     }
                 })
                 .catch(() => setGithubConnected(false));
@@ -343,7 +348,7 @@ export default function DashboardPage() {
                 <div className="ambient-blob absolute top-[40%] left-[40%] w-[30%] h-[30%] bg-cyan-500/5 rounded-full blur-[100px]" />
             </div>
 
-            <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
+            <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} userName={userName} />
 
             <main
                 ref={containerRef}
@@ -358,7 +363,7 @@ export default function DashboardPage() {
                         <h1 className="text-3xl font-bold tracking-tight text-white">
                             Dashboard
                         </h1>
-                        <p className="text-white/40 mt-1 font-medium">Welcome back, UniSpark</p>
+                        <p className="text-white/40 mt-1 font-medium">Welcome back, {userName}</p>
                     </div>
 
                     <div className="flex items-center gap-4">
