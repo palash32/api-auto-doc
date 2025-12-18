@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import {
@@ -38,6 +39,7 @@ const MethodBadge = ({ method }: { method: string }) => {
 
 export default function ApiViewerPage() {
     const containerRef = useRef<HTMLDivElement>(null);
+    const searchParams = useSearchParams();
     const [repositories, setRepositories] = useState<Repository[]>([]);
     const [selectedRepo, setSelectedRepo] = useState<string>("");
     const [searchQuery, setSearchQuery] = useState("");
@@ -63,7 +65,12 @@ export default function ApiViewerPage() {
     const fetchRepositories = async () => {
         const repos = await api.getRepositories();
         setRepositories(repos);
-        if (repos.length > 0) {
+
+        // Check URL for repo param first, otherwise use first repo
+        const repoIdFromUrl = searchParams.get('repo');
+        if (repoIdFromUrl && repos.some(r => r.id === repoIdFromUrl)) {
+            setSelectedRepo(repoIdFromUrl);
+        } else if (repos.length > 0) {
             setSelectedRepo(repos[0].id);
         }
     };
