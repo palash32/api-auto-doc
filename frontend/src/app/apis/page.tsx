@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
@@ -37,7 +37,7 @@ const MethodBadge = ({ method }: { method: string }) => {
     );
 };
 
-export default function ApiViewerPage() {
+function ApiViewerPageContent() {
     const containerRef = useRef<HTMLDivElement>(null);
     const searchParams = useSearchParams();
     const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -281,5 +281,18 @@ export default function ApiViewerPage() {
                 />
             )}
         </div>
+    );
+}
+
+// Wrap with Suspense to fix Next.js 14 useSearchParams prerender issue
+export default function ApiViewerPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 pt-24 px-6 flex items-center justify-center">
+                <div className="inline-block w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+        }>
+            <ApiViewerPageContent />
+        </Suspense>
     );
 }
