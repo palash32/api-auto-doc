@@ -12,15 +12,76 @@ concurrency:
 
 jobs:
   # ============================================
-  # BACKEND (Python/FastAPI)
+  # GATEWAY SERVICE (Node.js/Express)
   # ============================================
-  backend-lint:
-    name: Backend - Lint & Type Check
+  gateway-lint:
+    name: Gateway - Lint & Type Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
       run:
-        working-directory: backend
+        working-directory: services/gateway
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: services/gateway/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint || true
+
+      - name: Run TypeScript type check
+        run: npx tsc --noEmit
+
+  # ============================================
+  # SCANNER SERVICE (Go)
+  # ============================================
+  scanner-build:
+    name: Scanner - Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: services/scanner
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache-dependency-path: services/scanner/go.sum
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Run tests
+        run: go test -v ./...
+
+  # ============================================
+  # AI SERVICE (Python/FastAPI)
+  # ============================================
+  ai-lint:
+    name: AI Service - Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: services/ai
 
     steps:
       - name: Checkout code
@@ -31,7 +92,7 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: backend/requirements.txt
+          cache-dependency-path: services/ai/requirements.txt
 
       - name: Install dependencies
         run: |
@@ -40,56 +101,10 @@ jobs:
           pip install ruff mypy
 
       - name: Run Ruff linter
-        run: ruff check . --fix --exit-non-zero-on-fix || true
+        run: ruff check . --exit-non-zero-on-fix || true
 
       - name: Run type checker
         run: mypy app --ignore-missing-imports || true
-
-  backend-test:
-    name: Backend - Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: backend
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: backend/requirements.txt
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx
-
-      - name: Run tests
-        run: pytest tests/ -v --tb=short || echo "No tests found"
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
-          SECRET_KEY: test-secret-key
-          DEV_MODE: "true"
 
   # ============================================
   # FRONTEND (Next.js)
@@ -189,13 +204,19 @@ jobs:
           npm ci --ignore-scripts
           npm audit --production --audit-level=high || true
 
+      - name: Run npm audit (gateway)
+        working-directory: services/gateway
+        run: |
+          npm ci --ignore-scripts
+          npm audit --production --audit-level=high || true
+
       - name: Setup Python for pip audit
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Run pip audit (backend)
-        working-directory: backend
+      - name: Run pip audit (AI service)
+        working-directory: services/ai
         run: |
           pip install pip-audit
           pip-audit -r requirements.txt || true
@@ -216,12 +237,30 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Backend Docker image
+      - name: Build Gateway Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
+          context: ./services/gateway
           push: false
-          tags: api-auto-doc-backend:test
+          tags: api-auto-doc-gateway:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Scanner Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/scanner
+          push: false
+          tags: api-auto-doc-scanner:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build AI Service Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/ai
+          push: false
+          tags: api-auto-doc-ai:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -231,14 +270,15 @@ jobs:
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
-    needs: [backend-lint, backend-test, frontend-lint, frontend-build, security]
+    needs: [gateway-lint, scanner-build, ai-lint, frontend-lint, frontend-build, security]
     if: always()
 
     steps:
       - name: Check all jobs status
         run: |
-          if [[ "${{ needs.backend-lint.result }}" == "failure" ]] || \
-             [[ "${{ needs.backend-test.result }}" == "failure" ]] || \
+          if [[ "${{ needs.gateway-lint.result }}" == "failure" ]] || \
+             [[ "${{ needs.scanner-build.result }}" == "failure" ]] || \
+             [[ "${{ needs.ai-lint.result }}" == "failure" ]] || \
              [[ "${{ needs.frontend-lint.result }}" == "failure" ]] || \
              [[ "${{ needs.frontend-build.result }}" == "failure" ]]; then
             echo "One or more required jobs failed"

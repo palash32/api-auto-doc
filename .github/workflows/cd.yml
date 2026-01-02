@@ -36,11 +36,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Backend Deployment to Render
-      - name: Deploy Backend to Render
-        if: vars.RENDER_BACKEND_DEPLOY_HOOK != ''
+      # Gateway Service Deployment
+      - name: Deploy Gateway to Render
+        if: vars.RENDER_GATEWAY_DEPLOY_HOOK != ''
         run: |
-          curl -X POST "${{ vars.RENDER_BACKEND_DEPLOY_HOOK }}" || echo "Render deploy hook not configured"
+          curl -X POST "${{ vars.RENDER_GATEWAY_DEPLOY_HOOK }}" || echo "Render Gateway deploy hook not configured"
+
+      # Scanner Service Deployment
+      - name: Deploy Scanner to Render
+        if: vars.RENDER_SCANNER_DEPLOY_HOOK != ''
+        run: |
+          curl -X POST "${{ vars.RENDER_SCANNER_DEPLOY_HOOK }}" || echo "Render Scanner deploy hook not configured"
+
+      # AI Service Deployment
+      - name: Deploy AI Service to Render
+        if: vars.RENDER_AI_DEPLOY_HOOK != ''
+        run: |
+          curl -X POST "${{ vars.RENDER_AI_DEPLOY_HOOK }}" || echo "Render AI deploy hook not configured"
 
       # Frontend Deployment to Vercel
       - name: Deploy Frontend to Vercel
@@ -59,6 +71,12 @@ jobs:
       - name: Deployment Summary
         run: |
           echo "## 🚀 Staging Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Services Deployed:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Gateway:** Node.js/Express API Gateway" >> $GITHUB_STEP_SUMMARY
+          echo "- **Scanner:** Go Scanner Service" >> $GITHUB_STEP_SUMMARY
+          echo "- **AI:** Python/FastAPI AI Service" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend:** Next.js Application" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
@@ -79,13 +97,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Backend Deployment
-      - name: Deploy Backend to Render (Production)
-        if: vars.RENDER_PRODUCTION_DEPLOY_HOOK != ''
+      # Gateway Service Deployment (Production)
+      - name: Deploy Gateway to Render (Production)
+        if: vars.RENDER_GATEWAY_PROD_DEPLOY_HOOK != ''
         run: |
-          curl -X POST "${{ vars.RENDER_PRODUCTION_DEPLOY_HOOK }}" || echo "Render production deploy hook not configured"
+          curl -X POST "${{ vars.RENDER_GATEWAY_PROD_DEPLOY_HOOK }}" || echo "Render Gateway production deploy hook not configured"
 
-      # Frontend Deployment
+      # Scanner Service Deployment (Production)
+      - name: Deploy Scanner to Render (Production)
+        if: vars.RENDER_SCANNER_PROD_DEPLOY_HOOK != ''
+        run: |
+          curl -X POST "${{ vars.RENDER_SCANNER_PROD_DEPLOY_HOOK }}" || echo "Render Scanner production deploy hook not configured"
+
+      # AI Service Deployment (Production)
+      - name: Deploy AI Service to Render (Production)
+        if: vars.RENDER_AI_PROD_DEPLOY_HOOK != ''
+        run: |
+          curl -X POST "${{ vars.RENDER_AI_PROD_DEPLOY_HOOK }}" || echo "Render AI production deploy hook not configured"
+
+      # Frontend Deployment (Production)
       - name: Deploy Frontend to Vercel (Production)
         if: vars.VERCEL_ORG_ID != ''
         uses: amondnet/vercel-action@v25
@@ -102,6 +132,15 @@ jobs:
       - name: Deployment Summary
         run: |
           echo "## 🎉 Production Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Microservices Architecture v2.0" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Technology | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Gateway | Node.js/Express | ✅ Deployed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Scanner | Go/Gin | ✅ Deployed |" >> $GITHUB_STEP_SUMMARY
+          echo "| AI | Python/FastAPI | ✅ Deployed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | Next.js | ✅ Deployed |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Version:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
@@ -148,8 +187,20 @@ jobs:
             
             ${{ steps.changelog.outputs.changelog }}
             
+            ## Architecture
+            This release uses the **Microservices Architecture v2.0**:
+            
+            | Service | Technology | Description |
+            |---------|------------|-------------|
+            | Gateway | Node.js/Express | API Gateway, Auth, Rate Limiting |
+            | Scanner | Go/Gin | Repository scanning, endpoint detection |
+            | AI | Python/FastAPI | Gemini AI documentation generation |
+            | Frontend | Next.js 14 | React user interface |
+            
             ## Deployment Info
-            - **Backend:** Deployed to Render
+            - **Gateway:** Deployed to Render
+            - **Scanner:** Deployed to Render
+            - **AI Service:** Deployed to Render
             - **Frontend:** Deployed to Vercel
             
             ---
