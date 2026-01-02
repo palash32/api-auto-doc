@@ -1,110 +1,158 @@
-# ============================================
-# Docker Compose for Local Development
-# ============================================
-# Usage: docker-compose up -d
+# API Auto-Documentation Platform - Docker Compose
+# Local development environment
 
 version: '3.8'
 
 services:
-  # ============================================
-  # PostgreSQL Database
-  # ============================================
+  # ==========================================================================
+  # API GATEWAY (Node.js + Express)
+  # ==========================================================================
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=development
+      - PORT=8000
+      - FRONTEND_URL=http://localhost:3000
+      - JWT_SECRET=dev-secret-change-in-production
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/autodoc
+      - SCANNER_URL=http://scanner:3001
+      - AI_SERVICE_URL=http://ai:3002
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - ./services/gateway/src:/app/src
+    command: npm run dev
+    networks:
+      - autodoc-network
+
+  # ==========================================================================
+  # DISCOVERY ENGINE (Go + Gin)
+  # ==========================================================================
+  scanner:
+    build:
+      context: ./services/scanner
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - GIN_MODE=debug
+      - GATEWAY_URL=http://gateway:8000
+    networks:
+      - autodoc-network
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost:3001/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ==========================================================================
+  # AI SERVICE (Python + FastAPI)
+  # ==========================================================================
+  ai:
+    build:
+      context: ./services/ai
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - ENVIRONMENT=development
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GATEWAY_URL=http://gateway:8000
+    networks:
+      - autodoc-network
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3002/health')" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ==========================================================================
+  # FRONTEND (Next.js) - Connect to local dev server
+  # ==========================================================================
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NEXT_PUBLIC_API_URL=http://localhost:8000
+  #   networks:
+  #     - autodoc-network
+
+  # ==========================================================================
+  # DATABASES & CACHE
+  # ==========================================================================
   postgres:
     image: postgres:16-alpine
-    container_name: api-doc-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_NAME:-apidoc}
     ports:
       - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=autodoc
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - autodoc-network
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # ============================================
-  # Redis (Session Store & Cache)
-  # ============================================
   redis:
     image: redis:7-alpine
-    container_name: api-doc-redis
-    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - redis-data:/data
+    networks:
+      - autodoc-network
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
+  # ==========================================================================
+  # COMING IN RELEASE 3: Data Intelligence
+  # ==========================================================================
+  # mongodb:
+  #   image: mongo:7
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongo-data:/data/db
 
-  # ============================================
-  # Backend API (FastAPI)
-  # ============================================
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: api-doc-backend
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-apidoc}
-      - REDIS_URL=redis://redis:6379/0
-      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
-      - DEV_MODE=true
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:8000
-      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
-      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+  # neo4j:
+  #   image: neo4j:5
+  #   ports:
+  #     - "7474:7474"
+  #     - "7687:7687"
 
-  # ============================================
-  # Frontend (Next.js) - Development
-  # ============================================
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
-    container_name: api-doc-frontend
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
-      - NEXT_PUBLIC_WS_HOST=localhost:8000
-    depends_on:
-      - backend
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
-    command: npm run dev
+  # elasticsearch:
+  #   image: elasticsearch:8.11.0
+  #   ports:
+  #     - "9200:9200"
 
-# ============================================
-# Volumes
-# ============================================
+  # influxdb:
+  #   image: influxdb:2.7
+  #   ports:
+  #     - "8086:8086"
+
 volumes:
-  postgres_data:
-  redis_data:
+  postgres-data:
+  redis-data:
+    # mongo-data:
 
-    # ============================================
-    # Networks
-    # ============================================
 networks:
-  default:
-    name: api-doc-network
+  autodoc-network:
+    driver: bridge
