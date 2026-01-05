@@ -117,8 +117,14 @@ app.use(errorHandler);
 // SERVER START
 // =============================================================================
 
-app.listen(PORT, () => {
-    console.log(`
+import { initializeStore } from './store';
+
+async function startServer() {
+    // Initialize database/store
+    await initializeStore();
+
+    app.listen(PORT, () => {
+        console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║         API Auto-Documentation Platform - Gateway          ║
 ╠═══════════════════════════════════════════════════════════╣
@@ -126,7 +132,14 @@ app.listen(PORT, () => {
 ║  📚 API Docs:   http://localhost:${PORT}/docs                 ║
 ║  🔧 Environment: ${(process.env.NODE_ENV || 'development').padEnd(35)}║
 ╚═══════════════════════════════════════════════════════════╝
-  `);
+    `);
+    });
+}
+
+startServer().catch(err => {
+    console.error('❌ Failed to start server:', err);
+    process.exit(1);
 });
 
 export default app;
+
