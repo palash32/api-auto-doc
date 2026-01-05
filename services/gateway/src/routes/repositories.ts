@@ -6,24 +6,95 @@
 
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 import { authenticateToken } from '../middleware/auth';
+import { repositories, endpoints, Repository, Endpoint } from '../store';
 
 const router = Router();
+const SCANNER_URL = process.env.SCANNER_URL || 'http://localhost:3001';
 
-// In-memory repository store (replace with database)
-interface Repository {
-    id: string;
-    name: string;
-    fullName: string;
-    url: string;
-    organizationId: string;
-    scanStatus: 'pending' | 'scanning' | 'completed' | 'failed';
-    apiCount: number;
-    lastScanned: Date | null;
-    createdAt: Date;
+// =============================================================================
+// HELPER: TRIGGER SCAN
+// =============================================================================
+
+async function triggerScan(repo: Repository) {
+    try {
+        console.log(`🚀 Triggering scan for ${repo.fullName} at ${SCANNER_URL}`);
+        repo.scanStatus = 'scanning';
+
+        // 1. Start Scan
+        const startRes = await axios.post(`${SCANNER_URL}/scan`, {
+            url: repo.url,
+            branch: 'main' // Default to main/master
+        });
+
+        const scanId = startRes.data.scan_id;
+        console.log(`✅ Scan started for ${repo.fullName} (ID: ${scanId})`);
+
+        // 2. Poll for completion
+        const pollInterval = setInterval(async () => {
+            try {
+                const statusRes = await axios.get(`${SCANNER_URL}/scan/${scanId}`);
+                const status = statusRes.data.status;
+
+                if (status === 'completed') {
+                    clearInterval(pollInterval);
+                    console.log(`🎉 Scan completed for ${repo.fullName}`);
+
+                    // 3. Get Results
+                    const resultRes = await axios.get(`${SCANNER_URL}/scan/${scanId}/endpoints`);
+                    const detectedEndpoints = resultRes.data.endpoints || [];
+
+                    // 4. Update Store
+                    repo.scanStatus = 'completed';
+                    repo.apiCount = detectedEndpoints.length;
+                    repo.lastScanned = new Date();
+
+                    // Clear old endpoints for this repo
+                    for (const [id, ep] of endpoints.entries()) {
+                        if (ep.repositoryId === repo.id) {
+                            endpoints.delete(id);
+                        }
+                    }
+
+                    // Add new endpoints
+                    detectedEndpoints.forEach((ep: any) => {
+                        const newEndpoint: Endpoint = {
+                            id: uuidv4(),
+                            repositoryId: repo.id,
+                            path: ep.path,
+                            method: ep.method,
+                            summary: ep.description || `${ep.method} ${ep.path}`,
+                            description: '',
+                            tags: [], // Scanner might detect tags, but simple for now
+                            parameters: ep.parameters || [],
+                            requestBody: ep.body || null,
+                            responses: [],
+                            authRequired: false, // Detect auth in scanner?
+                            filePath: ep.file_path,
+                            codeSnippet: ep.code_snippet
+                        };
+                        endpoints.set(newEndpoint.id, newEndpoint);
+                    });
+
+                    console.log(`💾 Saved ${detectedEndpoints.length} endpoints for ${repo.fullName}`);
+
+                } else if (status === 'failed') {
+                    clearInterval(pollInterval);
+                    repo.scanStatus = 'failed';
+                    console.error(`❌ Scan failed for ${repo.fullName}`);
+                }
+            } catch (err) {
+                console.error(`Error polling scan status:`, err);
+                // Don't clear interval immediately, might be transient network error
+            }
+        }, 2000);
+
+    } catch (error) {
+        console.error('Failed to trigger scan:', error);
+        repo.scanStatus = 'failed';
+    }
 }
-
-const repositories: Map<string, Repository> = new Map();
 
 // =============================================================================
 // LIST REPOSITORIES
@@ -97,19 +168,8 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
         };
         repositories.set(repo.id, repo);
 
-        // TODO: Queue scan job (call scanner service)
-        console.log(`📥 Repository added: ${fullName} - Scan queued`);
-
-        // Simulate scan completion after 2 seconds (for demo)
-        setTimeout(() => {
-            const r = repositories.get(repo.id);
-            if (r) {
-                r.scanStatus = 'completed';
-                r.apiCount = Math.floor(Math.random() * 20) + 5; // Random 5-25 APIs
-                r.lastScanned = new Date();
-                console.log(`✅ Scan complete: ${fullName} - Found ${r.apiCount} APIs`);
-            }
-        }, 2000);
+        // Queue scan
+        triggerScan(repo);
 
         res.status(201).json({
             id: repo.id,
@@ -144,7 +204,14 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
             return res.status(403).json({ error: 'Access denied' });
         }
 
+        // Delete repo and its endpoints
         repositories.delete(id);
+        for (const [epId, ep] of endpoints.entries()) {
+            if (ep.repositoryId === id) {
+                endpoints.delete(epId);
+            }
+        }
+
         res.status(204).send();
     } catch (error) {
         console.error('Delete repo error:', error);
@@ -165,17 +232,7 @@ router.post('/:id/scan', authenticateToken, async (req: Request, res: Response) 
             return res.status(404).json({ error: 'Repository not found' });
         }
 
-        repo.scanStatus = 'scanning';
-
-        // TODO: Call scanner service
-        console.log(`🔄 Rescan triggered: ${repo.fullName}`);
-
-        // Simulate scan
-        setTimeout(() => {
-            repo.scanStatus = 'completed';
-            repo.apiCount = Math.floor(Math.random() * 20) + 5;
-            repo.lastScanned = new Date();
-        }, 2000);
+        triggerScan(repo);
 
         res.json({ message: 'Scan started', status: 'scanning' });
     } catch (error) {

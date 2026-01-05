@@ -233,6 +233,7 @@ export default function DashboardPage() {
     const [mounted, setMounted] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [showNotifications, setShowNotifications] = useState(false);
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
     // Demo notifications
@@ -443,10 +444,41 @@ export default function DashboardPage() {
                         </div>
 
                         {isAuthenticated ? (
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold shadow-lg cursor-pointer hover:scale-110 transition-transform">
-                                    US
-                                </div>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                                    className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold shadow-lg cursor-pointer hover:scale-110 transition-transform"
+                                >
+                                    {userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
+                                </button>
+
+                                {showProfileMenu && (
+                                    <div className="absolute right-0 top-12 w-56 bg-[#1a1a1a] backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl z-50 overflow-hidden">
+                                        <div className="p-3 border-b border-white/10">
+                                            <p className="text-sm font-medium text-white">{userName}</p>
+                                            <p className="text-xs text-gray-400">{userEmail}</p>
+                                        </div>
+                                        <div className="p-2">
+                                            <button
+                                                onClick={() => window.location.href = '/settings'}
+                                                className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-white/10 rounded-lg transition-colors flex items-center gap-2"
+                                            >
+                                                <Settings size={14} />
+                                                Settings
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    localStorage.removeItem('token');
+                                                    window.location.href = '/';
+                                                }}
+                                                className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-2"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></svg>
+                                                Logout
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <MagneticButton
@@ -498,13 +530,21 @@ export default function DashboardPage() {
                                     <RepoCard key={repo.id} repo={repo} />
                                 ))
                             ) : (
-                                <div className="col-span-full text-center py-8 text-gray-500">
-                                    {searchQuery ? `No repositories matching "${searchQuery}"` : "No repositories yet"}
+                                <div className="col-span-full flex items-center justify-center py-12">
+                                    <div
+                                        onClick={() => setIsModalOpen(true)}
+                                        className="group border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center text-white/40 hover:text-white hover:border-primary/30 hover:bg-primary/5 cursor-pointer h-[180px] w-64 transition-all duration-300"
+                                    >
+                                        <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300">
+                                            <Plus size={24} />
+                                        </div>
+                                        <p className="text-sm font-medium mt-4">Connect New Repository</p>
+                                    </div>
                                 </div>
                             )}
 
-                            {/* Add New Card Placeholder - Polished */}
-                            {!loading && (
+                            {/* Add New Card Placeholder - Only show when repos exist */}
+                            {!loading && filteredRepos.length > 0 && (
                                 <GlassCard
                                     onClick={() => setIsModalOpen(true)}
                                     className="group border-dashed border-white/10 flex flex-col items-center justify-center text-white/40 hover:text-white hover:border-primary/30 hover:bg-primary/5 cursor-pointer min-h-[180px] transition-all duration-300"

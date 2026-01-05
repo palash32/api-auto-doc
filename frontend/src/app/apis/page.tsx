@@ -94,18 +94,24 @@ function ApiViewerPageContent() {
     // GSAP animations
     useGSAP(() => {
         if (containerRef.current) {
-            gsap.from(".api-card", {
-                opacity: 0,
-                y: 20,
-                duration: 0.6,
-                stagger: 0.1,
-                ease: "power2.out"
-            });
+            gsap.fromTo(".api-card",
+                {
+                    opacity: 0,
+                    y: 20
+                },
+                {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.6,
+                    stagger: 0.1,
+                    ease: "power2.out"
+                }
+            );
         }
     }, [endpoints]);
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 pt-24 px-6">
+        <div ref={containerRef} className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 pt-24 px-6 pb-20">
             <div className="max-w-7xl mx-auto space-y-8">
                 {/* Header */}
                 <div className="text-center space-y-4">

@@ -157,5 +157,21 @@ export const api = {
             console.error('Error updating endpoint:', error);
             return null;
         }
+    },
+
+    async generateDocs(endpointId: string): Promise<any> {
+        try {
+            const token = getAuthToken();
+            const res = await fetch(`${API_BASE_URL}/api/endpoints/${endpointId}/generate`, {
+                method: 'POST',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+
+            if (!res.ok) throw new Error('Failed to generate docs');
+            return res.json();
+        } catch (error) {
+            console.error('Error generating docs:', error);
+            throw error;
+        }
     }
 };

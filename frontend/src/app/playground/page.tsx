@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
     Play,
     Save,
@@ -57,13 +58,20 @@ interface SavedToken {
 }
 
 export default function PlaygroundPage() {
+    const searchParams = useSearchParams();
+
+    // Get URL parameters for pre-filling
+    const paramMethod = searchParams.get('method');
+    const paramPath = searchParams.get('path');
+    const paramBody = searchParams.get('body');
+
     // Request state
-    const [method, setMethod] = useState("GET");
-    const [url, setUrl] = useState("");
+    const [method, setMethod] = useState(paramMethod?.toUpperCase() || "GET");
+    const [url, setUrl] = useState(paramPath ? `${API_BASE_URL}${paramPath}` : "");
     const [headers, setHeaders] = useState<Header[]>([
         { key: "Content-Type", value: "application/json", enabled: true }
     ]);
-    const [body, setBody] = useState("");
+    const [body, setBody] = useState(paramBody || "");
     const [activeTab, setActiveTab] = useState<"headers" | "body" | "auth">("headers");
 
     // Response state
@@ -136,9 +144,13 @@ export default function PlaygroundPage() {
                 headersObj[h.key] = h.value;
             });
 
+            const token = localStorage.getItem('token');
             const res = await fetch(`${API_BASE_URL}/api/playground/proxy`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     method,
                     url,

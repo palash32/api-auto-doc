@@ -1,64 +1,16 @@
 /**
  * Endpoints Routes
  * 
- * Handles: List endpoints, Get endpoint details, Update documentation
+ * Handles: List endpoints, Get endpoint details, Update documentation, AI Generation
  */
 
 import { Router, Request, Response } from 'express';
+import axios from 'axios';
 import { authenticateToken } from '../middleware/auth';
+import { endpoints, Endpoint } from '../store';
 
 const router = Router();
-
-// In-memory endpoint store (replace with database)
-interface Endpoint {
-    id: string;
-    repositoryId: string;
-    path: string;
-    method: string;
-    summary: string;
-    description: string;
-    tags: string[];
-    parameters: any[];
-    requestBody: any | null;
-    responses: any[];
-    authRequired: boolean;
-    filePath: string;
-}
-
-const endpoints: Map<string, Endpoint> = new Map();
-
-// Seed some demo endpoints
-const demoEndpoints: Endpoint[] = [
-    {
-        id: 'ep-1',
-        repositoryId: 'demo',
-        path: '/api/users',
-        method: 'GET',
-        summary: 'List all users',
-        description: 'Returns a paginated list of users in the organization',
-        tags: ['users'],
-        parameters: [{ name: 'page', in: 'query', type: 'integer' }],
-        requestBody: null,
-        responses: [{ status: 200, description: 'Success' }],
-        authRequired: true,
-        filePath: 'src/routes/users.ts'
-    },
-    {
-        id: 'ep-2',
-        repositoryId: 'demo',
-        path: '/api/users/{id}',
-        method: 'GET',
-        summary: 'Get user by ID',
-        description: 'Returns details of a specific user',
-        tags: ['users'],
-        parameters: [{ name: 'id', in: 'path', type: 'string', required: true }],
-        requestBody: null,
-        responses: [{ status: 200, description: 'Success' }, { status: 404, description: 'Not found' }],
-        authRequired: true,
-        filePath: 'src/routes/users.ts'
-    }
-];
-demoEndpoints.forEach(e => endpoints.set(e.id, e));
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:3002';
 
 // =============================================================================
 // LIST ENDPOINTS FOR REPOSITORY
@@ -69,9 +21,14 @@ router.get('/repositories/:repoId/endpoints', authenticateToken, async (req: Req
         const { repoId } = req.params;
         const { page = 1, per_page = 50, method, search } = req.query;
 
+        console.log(`📊 DEBUG: Total endpoints in store: ${endpoints.size}`);
+        console.log(`📊 DEBUG: Fetching endpoints for repo: ${repoId}`);
+
         // Filter endpoints
         let filtered = Array.from(endpoints.values())
-            .filter(e => e.repositoryId === repoId || repoId === 'demo');
+            .filter(e => e.repositoryId === repoId);
+
+        console.log(`📊 DEBUG: Found ${filtered.length} endpoints for repo ${repoId}`);
 
         if (method) {
             filtered = filtered.filter(e => e.method === (method as string).toUpperCase());
@@ -170,6 +127,78 @@ router.patch('/endpoints/:id', authenticateToken, async (req: Request, res: Resp
     } catch (error) {
         console.error('Update endpoint error:', error);
         res.status(500).json({ error: 'Failed to update endpoint' });
+    }
+});
+
+// =============================================================================
+// GENERATE DOCUMENTATION (AI)
+// =============================================================================
+
+router.post('/endpoints/:id/generate', authenticateToken, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const endpoint = endpoints.get(id);
+
+        if (!endpoint) {
+            return res.status(404).json({ error: 'Endpoint not found' });
+        }
+
+        console.log(`🤖 Generatng docs for ${endpoint.method} ${endpoint.path}...`);
+
+        // Call AI Service
+        try {
+            const aiResponse = await axios.post(`${AI_SERVICE_URL}/generate`, {
+                endpoint: {
+                    path: endpoint.path,
+                    method: endpoint.method,
+                    code_snippet: endpoint.codeSnippet || "",
+                    file_path: endpoint.filePath
+                }
+            });
+
+            const result = aiResponse.data;
+            if (result.success && result.documentation) {
+                const doc = result.documentation;
+
+                // Update endpoint with generated docs
+                endpoint.summary = doc.summary || endpoint.summary;
+                endpoint.description = doc.description || endpoint.description;
+
+                if (doc.parameters && doc.parameters.length > 0) {
+                    endpoint.parameters = doc.parameters;
+                }
+
+                if (doc.request_body) {
+                    endpoint.requestBody = doc.request_body;
+                }
+
+                if (doc.responses && doc.responses.length > 0) {
+                    endpoint.responses = doc.responses;
+                }
+
+                console.log(`✅ AI Docs generated for ${endpoint.path}`);
+
+                res.json({
+                    id: endpoint.id,
+                    success: true,
+                    cost: result.cost,
+                    documentation: doc
+                });
+            } else {
+                throw new Error('AI service returned unsuccessful response');
+            }
+
+        } catch (aiError: any) {
+            console.error('AI Service call failed:', aiError.response?.data || aiError.message);
+            return res.status(502).json({
+                error: 'AI Generation failed',
+                details: aiError.response?.data || aiError.message
+            });
+        }
+
+    } catch (error) {
+        console.error('Generate docs error:', error);
+        res.status(500).json({ error: 'Failed to generate documentation' });
     }
 });
 

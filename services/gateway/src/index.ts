@@ -27,6 +27,7 @@ import authRoutes from './routes/auth';
 import repositoryRoutes from './routes/repositories';
 import endpointRoutes from './routes/endpoints';
 import healthRoutes from './routes/health';
+import playgroundRoutes from './routes/playground';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -79,6 +80,7 @@ app.use('/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/repositories', repositoryRoutes);
 app.use('/api', endpointRoutes);
+app.use('/api/playground', playgroundRoutes);
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {

@@ -28,24 +28,25 @@ class DocumentationResult:
     cost: float  # Always 0 for free tier
 
 
-SYSTEM_PROMPT = """You are an expert API documentation writer. Given code for an API endpoint, generate comprehensive documentation.
+SYSTEM_PROMPT = """You are an API documentation generator. You MUST return ONLY valid JSON.
 
-Return ONLY a valid JSON object (no markdown, no code blocks) with:
+CRITICAL: Your response must be PURE JSON with NO extra text before or after.
+DO NOT wrap in markdown code blocks.
+DO NOT add explanations.
+DO NOT use newlines inside string values.
+
+Return this exact JSON structure:
 {
-  "summary": "Brief one-line description",
-  "description": "Detailed description of what this endpoint does",
-  "parameters": [
-    {"name": "param_name", "in": "path|query|header", "type": "string|integer|boolean", "required": true, "description": "..."}
-  ],
-  "request_body": {"type": "object", "properties": {}} or null if no body,
-  "responses": [
-    {"status": 200, "description": "Success response description"}
-  ],
-  "tags": ["category"],
+  "summary": "one-line description here",
+  "description": "detailed multi-line description here",
+  "parameters": [],
+  "request_body": null,
+  "responses": [{"status": 200, "description": "Success"}],
+  "tags": [],
   "auth_required": false
 }
 
-Be concise. Return only the JSON, nothing else."""
+Replace the placeholder text with actual documentation. Keep all strings on single lines (no embedded newlines)."""
 
 
 async def generate_documentation(endpoint) -> DocumentationResult:
@@ -92,8 +93,30 @@ Return only valid JSON, no markdown code blocks."""
         content = re.sub(r'^```\s*$', '', content, flags=re.MULTILINE)
         content = content.strip()
         
-        # Parse response
-        documentation = json.loads(content)
+        # Try to extract JSON if embedded in text
+        json_match = re.search(r'\{[\s\S]*\}', content)
+        if json_match:
+            content = json_match.group(0)
+        
+        # Parse response with better error handling
+        try:
+            documentation = json.loads(content)
+        except json.JSONDecodeError:
+            # Fallback: try to fix common issues
+            logger.warning("First JSON parse failed, attempting fixes...")
+            logger.error(f"Raw response that failed: {content[:500]}")
+            
+            # Create minimal fallback documentation
+            documentation = {
+                "summary": f"{endpoint.method} {endpoint.path}",
+                "description": "Documentation generation failed. Please edit manually.",
+                "parameters": [],
+                "request_body": None,
+                "responses": [{"status": 200, "description": "Success"}],
+                "tags": [],
+                "auth_required": False
+            }
+            logger.warning("Using fallback documentation due to parse error")
         
         logger.info(f"Generated docs for {endpoint.method} {endpoint.path} via Gemini")
         
@@ -104,10 +127,7 @@ Return only valid JSON, no markdown code blocks."""
             cost=0.0  # Free tier
         )
         
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse Gemini response as JSON: {e}")
-        logger.error(f"Raw response: {content[:500]}")
-        raise ValueError(f"Invalid JSON response from Gemini: {e}")
     except Exception as e:
         logger.error(f"Gemini API error: {e}")
         raise
+

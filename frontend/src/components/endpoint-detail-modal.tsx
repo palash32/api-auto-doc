@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Save, Lock, FileText, Tag, Code, Play } from "lucide-react";
+import { X, Save, Lock, FileText, Tag, Code, Play, Sparkles, Wand2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api, EndpointDetail } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -38,6 +38,7 @@ export function EndpointDetailModal({ endpointId, onClose, onSave }: EndpointDet
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [generating, setGenerating] = useState(false);
     const toast = useToast();
     const router = useRouter();
 
@@ -88,6 +89,32 @@ export function EndpointDetailModal({ endpointId, onClose, onSave }: EndpointDet
         setSaving(false);
     };
 
+    const handleGenerate = async () => {
+        if (generating || editing) return;
+
+        setGenerating(true);
+        try {
+            // toast.loading("Generating documentation with AI..."); 
+            const result = await api.generateDocs(endpointId);
+
+            if (result && result.success && result.documentation) {
+                const doc = result.documentation;
+                setEndpoint({ ...endpoint!, ...doc });
+                setSummary(doc.summary || endpoint!.summary);
+                setDescription(doc.description || endpoint!.description);
+                // Trigger parent refresh
+                onSave?.();
+                toast.success("Documentation generated! " + (result.cost ? `($${result.cost.toFixed(4)})` : ""));
+            } else {
+                toast.error("Failed to generate documentation");
+            }
+        } catch (error) {
+            toast.error("Error generating documentation");
+            console.error(error);
+        }
+        setGenerating(false);
+    };
+
     const addTag = () => {
         if (newTag && !tags.includes(newTag)) {
             setTags([...tags, newTag]);
@@ -131,6 +158,10 @@ export function EndpointDetailModal({ endpointId, onClose, onSave }: EndpointDet
                                     method: endpoint.method,
                                     path: endpoint.path
                                 });
+                                // Add request body if available
+                                if (endpoint.request_body) {
+                                    params.set('body', JSON.stringify(endpoint.request_body, null, 2));
+                                }
                                 router.push(`/playground?${params.toString()}`);
                             }}
                             className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg text-sm font-medium flex items-center gap-2 transition-all btn-press"
@@ -335,16 +366,35 @@ export function EndpointDetailModal({ endpointId, onClose, onSave }: EndpointDet
                                 </button>
                             </>
                         ) : (
-                            <button
-                                onClick={() => setEditing(true)}
-                                className="px-6 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors"
-                            >
-                                Edit Documentation
-                            </button>
+                            <>
+                                <button
+                                    onClick={() => setEditing(true)}
+                                    className="px-6 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors"
+                                >
+                                    Edit Documentation
+                                </button>
+                                <button
+                                    onClick={handleGenerate}
+                                    disabled={generating}
+                                    className="px-6 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-lg hover:from-teal-600 hover:to-emerald-600 transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+                                >
+                                    {generating ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            Generating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles className="w-4 h-4" />
+                                            Generate with AI
+                                        </>
+                                    )}
+                                </button>
+                            </>
                         )}
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
