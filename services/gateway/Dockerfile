@@ -12,12 +12,8 @@ COPY . .
 # Build TypeScript
 RUN npm run build
 
-# Expose port
-EXPOSE 8000
+# Railway provides PORT env variable - don't hardcode
+ENV PORT=8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget -qO- http://localhost:8000/health || exit 1
-
-# Start server
+# Start server (Railway will set PORT dynamically)
 CMD ["node", "dist/index.js"]
