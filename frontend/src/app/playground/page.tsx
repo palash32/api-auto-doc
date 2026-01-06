@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
     Play,
@@ -57,7 +57,25 @@ interface SavedToken {
     token_type: string;
 }
 
+// Wrapper component to handle Suspense boundary
 export default function PlaygroundPage() {
+    return (
+        <Suspense fallback={<PlaygroundSkeleton />}>
+            <PlaygroundContent />
+        </Suspense>
+    );
+}
+
+// Loading skeleton
+function PlaygroundSkeleton() {
+    return (
+        <div className="min-h-screen bg-background p-8 flex items-center justify-center">
+            <div className="animate-pulse text-gray-400">Loading playground...</div>
+        </div>
+    );
+}
+
+function PlaygroundContent() {
     const searchParams = useSearchParams();
 
     // Get URL parameters for pre-filling
