@@ -8,7 +8,7 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { authenticateToken } from '../middleware/auth';
-import { repositories, endpoints, Repository, Endpoint } from '../store';
+import { repositories, endpoints, Repository, Endpoint, RepoStore, EndpointStore } from '../store';
 
 const router = Router();
 const SCANNER_URL = process.env.SCANNER_URL || 'http://localhost:3001';
@@ -104,9 +104,8 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
         const organizationId = (req as any).user?.organization_id;
 
-        // Filter repos by organization
-        const orgRepos = Array.from(repositories.values())
-            .filter(r => r.organizationId === organizationId);
+        // Get repos from database (or in-memory fallback)
+        const orgRepos = await RepoStore.findByOrg(organizationId || '');
 
         res.json(orgRepos.map(r => ({
             id: r.id,
@@ -146,9 +145,8 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
         const [, owner, name] = match;
         const fullName = `${owner}/${name}`;
 
-        // Check if already added
-        const existing = Array.from(repositories.values())
-            .find(r => r.fullName === fullName && r.organizationId === organizationId);
+        // Check if already added - use database
+        const existing = await RepoStore.findByFullName(fullName, organizationId || '');
 
         if (existing) {
             return res.status(400).json({ error: 'Repository already added' });
@@ -166,7 +164,9 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
             lastScanned: null,
             createdAt: new Date()
         };
-        repositories.set(repo.id, repo);
+
+        // Save to database
+        await RepoStore.create(repo);
 
         // Queue scan
         triggerScan(repo);
@@ -195,7 +195,8 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
         const { id } = req.params;
         const organizationId = (req as any).user?.organization_id;
 
-        const repo = repositories.get(id);
+        // Use database lookup
+        const repo = await RepoStore.findById(id);
         if (!repo) {
             return res.status(404).json({ error: 'Repository not found' });
         }
@@ -204,13 +205,8 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        // Delete repo and its endpoints
-        repositories.delete(id);
-        for (const [epId, ep] of endpoints.entries()) {
-            if (ep.repositoryId === id) {
-                endpoints.delete(epId);
-            }
-        }
+        // Delete repo and its endpoints from database
+        await RepoStore.delete(id);
 
         res.status(204).send();
     } catch (error) {
@@ -226,7 +222,8 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
 router.post('/:id/scan', authenticateToken, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const repo = repositories.get(id);
+        // Use database lookup
+        const repo = await RepoStore.findById(id);
 
         if (!repo) {
             return res.status(404).json({ error: 'Repository not found' });

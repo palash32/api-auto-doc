@@ -172,6 +172,19 @@ export const RepoStore = {
         return rows.map(mapDbRepo);
     },
 
+    async findByFullName(fullName: string, orgId: string): Promise<Repository | null> {
+        if (!isUsingDatabase()) {
+            return Array.from(memRepositories.values()).find(
+                r => r.fullName === fullName && r.organizationId === orgId
+            ) || null;
+        }
+        const row = await queryOne<any>(
+            'SELECT * FROM repositories WHERE full_name = $1 AND organization_id = $2',
+            [fullName, orgId]
+        );
+        return row ? mapDbRepo(row) : null;
+    },
+
     async findAll(): Promise<Repository[]> {
         if (!isUsingDatabase()) return Array.from(memRepositories.values());
         const rows = await query<any>('SELECT * FROM repositories ORDER BY created_at DESC');
