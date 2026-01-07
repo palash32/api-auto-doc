@@ -73,7 +73,7 @@ router.post('/register', async (req: Request, res: Response) => {
 
         // Generate JWT
         const token = jwt.sign(
-            { sub: user.id, email: user.email },
+            { sub: user.id, email: user.email, organization_id: user.organizationId },
             JWT_SECRET,
             { expiresIn: '7d' }
         );
@@ -118,7 +118,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
         // Generate JWT
         const token = jwt.sign(
-            { sub: user.id, email: user.email },
+            { sub: user.id, email: user.email, organization_id: user.organizationId },
             JWT_SECRET,
             { expiresIn: '7d' }
         );
@@ -310,6 +310,7 @@ router.get('/github/callback', async (req: Request, res: Response) => {
             {
                 sub: user.id,
                 email: user.email,
+                organization_id: user.organizationId,  // Include org for repo operations
                 github_token: accessToken // Include GitHub token for API calls
             },
             JWT_SECRET,
