@@ -8,7 +8,7 @@ import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { authenticateToken } from '../middleware/auth';
-import { users, organizations, seedDemoData, User, UserStore } from '../store';
+import { users, organizations, seedDemoData, User, UserStore, OrgStore } from '../store';
 
 const router = Router();
 
@@ -256,20 +256,25 @@ router.get('/github/callback', async (req: Request, res: Response) => {
             return res.redirect(`${frontendUrl}/auth/callback?error=no_email`);
         }
 
-        // Find or create user
-        let user = Array.from(users.values()).find(u => u.githubId === githubUser.id);
+        // Find or create user - use database in production
+        let user = await UserStore.findByGithubId(githubUser.id);
 
         if (!user) {
             // Check if user exists with this email
-            user = Array.from(users.values()).find(u => u.email === primaryEmail);
+            user = await UserStore.findByEmail(primaryEmail);
 
             if (user) {
-                // Link GitHub to existing user
-                user.githubId = githubUser.id;
+                // Link GitHub to existing user - update in database
+                await UserStore.update(user.id, {
+                    githubId: githubUser.id,
+                    accessToken: accessToken,
+                    username: githubUser.name || githubUser.login,
+                    avatarUrl: githubUser.avatar_url
+                });
             } else {
                 // Create new user
                 const emailDomain = primaryEmail.split('@')[1]?.toLowerCase() || 'github';
-                let organization = Array.from(organizations.values()).find(o => o.name.includes(emailDomain));
+                let organization = await OrgStore.findByName(`${emailDomain} Workspace`);
 
                 if (!organization) {
                     organization = {
@@ -277,7 +282,7 @@ router.get('/github/callback', async (req: Request, res: Response) => {
                         name: `${emailDomain} Workspace`,
                         members: []
                     };
-                    organizations.set(organization.id, organization);
+                    await OrgStore.create(organization);
                 }
 
                 user = {
@@ -289,13 +294,15 @@ router.get('/github/callback', async (req: Request, res: Response) => {
                     accessToken: accessToken,
                     avatarUrl: githubUser.avatar_url
                 };
-                users.set(user.id, user);
+                await UserStore.create(user);
             }
         } else {
             // Update token and refresh profile info from GitHub
-            user.accessToken = accessToken;
-            user.username = githubUser.name || githubUser.login;
-            user.avatarUrl = githubUser.avatar_url;
+            await UserStore.update(user.id, {
+                accessToken: accessToken,
+                username: githubUser.name || githubUser.login,
+                avatarUrl: githubUser.avatar_url
+            });
         }
 
         // Generate JWT with GitHub token included
