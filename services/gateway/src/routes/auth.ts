@@ -8,7 +8,7 @@ import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { authenticateToken } from '../middleware/auth';
-import { users, organizations, seedDemoData, User } from '../store';
+import { users, organizations, seedDemoData, User, UserStore } from '../store';
 
 const router = Router();
 
@@ -148,7 +148,12 @@ router.post('/login', async (req: Request, res: Response) => {
 router.get('/me', authenticateToken, async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user?.sub;
-        const user = users.get(userId);
+
+        // Try database first (production), fall back to in-memory (development)
+        let user = await UserStore.findById(userId);
+        if (!user) {
+            user = users.get(userId) || null;
+        }
 
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
