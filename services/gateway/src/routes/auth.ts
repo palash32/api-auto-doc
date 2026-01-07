@@ -13,7 +13,7 @@ import { users, organizations, seedDemoData, User, UserStore, OrgStore } from '.
 const router = Router();
 
 // JWT secret (use env var in production)
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET_KEY || 'dev-secret-change-in-production';
 
 // Seed demo data on startup
 seedDemoData();

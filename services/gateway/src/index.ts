@@ -40,6 +40,9 @@ const PORT = process.env.PORT || 8000;
 // MIDDLEWARE
 // =============================================================================
 
+// Trust proxy (required for Railway/Vercel - fixes rate limiting)
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet());
 
