@@ -111,7 +111,7 @@ function ApiViewerPageContent() {
     }, [endpoints]);
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 pt-24 px-6 pb-20">
+        <main ref={containerRef} className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 pt-24 px-6 pb-20">
             <div className="max-w-7xl mx-auto space-y-8">
                 {/* Header */}
                 <div className="text-center space-y-4">
@@ -134,6 +134,7 @@ function ApiViewerPageContent() {
                             <select
                                 value={selectedRepo}
                                 onChange={(e) => setSelectedRepo(e.target.value)}
+                                aria-label="Select repository"
                                 className="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 {repositories.map((repo) => (
@@ -152,6 +153,7 @@ function ApiViewerPageContent() {
                             <select
                                 value={selectedMethod}
                                 onChange={(e) => setSelectedMethod(e.target.value)}
+                                aria-label="Filter by HTTP method"
                                 className="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
                                 <option value="">All Methods</option>
@@ -225,6 +227,7 @@ function ApiViewerPageContent() {
                                         <button
                                             onClick={() => setSelectedEndpointId(endpoint.id)}
                                             className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                                            aria-label={`Edit endpoint ${endpoint.path}`}
                                         >
                                             <Edit className="w-5 h-5 text-gray-400 group-hover:text-blue-400" />
                                         </button>
@@ -286,7 +289,7 @@ function ApiViewerPageContent() {
                     onSave={() => fetchEndpoints()}
                 />
             )}
-        </div>
+        </main>
     );
 }
 
