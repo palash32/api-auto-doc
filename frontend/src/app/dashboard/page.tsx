@@ -532,15 +532,15 @@ export default function DashboardPage() {
                                     <RepoCard key={repo.id} repo={repo} />
                                 ))
                             ) : (
-                                <div className="col-span-full flex items-center justify-center py-12">
+                                <div className="col-span-full">
                                     <div
                                         onClick={() => setIsModalOpen(true)}
-                                        className="group border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center text-white/40 hover:text-white hover:border-primary/30 hover:bg-primary/5 cursor-pointer h-[180px] w-64 transition-all duration-300"
+                                        className="group border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-between px-6 text-white/40 hover:text-white hover:border-primary/30 hover:bg-primary/5 cursor-pointer h-[180px] transition-all duration-300"
                                     >
-                                        <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300">
+                                        <p className="text-sm font-medium">Connect New Repository</p>
+                                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300">
                                             <Plus size={24} />
                                         </div>
-                                        <p className="text-sm font-medium mt-4">Connect New Repository</p>
                                     </div>
                                 </div>
                             )}
@@ -549,13 +549,13 @@ export default function DashboardPage() {
                             {!loading && filteredRepos.length > 0 && (
                                 <GlassCard
                                     onClick={() => setIsModalOpen(true)}
-                                    className="group border-dashed border-white/10 flex flex-col items-center justify-center text-white/40 hover:text-white hover:border-primary/30 hover:bg-primary/5 cursor-pointer min-h-[180px] transition-all duration-300"
+                                    className="group border-dashed border-white/10 flex items-center justify-between px-6 text-white/40 hover:text-white hover:border-primary/30 hover:bg-primary/5 cursor-pointer min-h-[180px] transition-all duration-300"
                                     hoverEffect={false}
                                 >
-                                    <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300">
+                                    <p className="text-sm font-medium">Connect New Repository</p>
+                                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300">
                                         <Plus size={24} />
                                     </div>
-                                    <p className="text-sm font-medium">Connect New Repository</p>
                                 </GlassCard>
                             )}
                         </div>
