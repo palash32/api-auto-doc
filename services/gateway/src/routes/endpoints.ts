@@ -7,7 +7,7 @@
 import { Router, Request, Response } from 'express';
 import axios from 'axios';
 import { authenticateToken } from '../middleware/auth';
-import { endpoints, Endpoint } from '../store';
+import { endpoints, Endpoint, EndpointStore } from '../store';
 
 const router = Router();
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:3002';
@@ -21,22 +21,19 @@ router.get('/repositories/:repoId/endpoints', authenticateToken, async (req: Req
         const { repoId } = req.params;
         const { page = 1, per_page = 50, method, search } = req.query;
 
-        console.log(`📊 DEBUG: Total endpoints in store: ${endpoints.size}`);
-        console.log(`📊 DEBUG: Fetching endpoints for repo: ${repoId}`);
+        // Get endpoints from database (or in-memory fallback)
+        let allEndpoints = await EndpointStore.findByRepo(repoId);
+        console.log(`📊 DEBUG: Found ${allEndpoints.length} endpoints for repo ${repoId} from database`);
 
-        // Filter endpoints
-        let filtered = Array.from(endpoints.values())
-            .filter(e => e.repositoryId === repoId);
-
-        console.log(`📊 DEBUG: Found ${filtered.length} endpoints for repo ${repoId}`);
-
+        // Filter by method
         if (method) {
-            filtered = filtered.filter(e => e.method === (method as string).toUpperCase());
+            allEndpoints = allEndpoints.filter(e => e.method === (method as string).toUpperCase());
         }
 
+        // Filter by search
         if (search) {
             const searchLower = (search as string).toLowerCase();
-            filtered = filtered.filter(e =>
+            allEndpoints = allEndpoints.filter(e =>
                 e.path.toLowerCase().includes(searchLower) ||
                 e.summary.toLowerCase().includes(searchLower)
             );
@@ -44,10 +41,10 @@ router.get('/repositories/:repoId/endpoints', authenticateToken, async (req: Req
 
         // Paginate
         const start = (Number(page) - 1) * Number(per_page);
-        const paginated = filtered.slice(start, start + Number(per_page));
+        const paginated = allEndpoints.slice(start, start + Number(per_page));
 
         res.json({
-            total: filtered.length,
+            total: allEndpoints.length,
             page: Number(page),
             per_page: Number(per_page),
             endpoints: paginated.map(e => ({
@@ -72,7 +69,8 @@ router.get('/repositories/:repoId/endpoints', authenticateToken, async (req: Req
 router.get('/endpoints/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const endpoint = endpoints.get(id);
+        // Use database lookup
+        const endpoint = await EndpointStore.findById(id);
 
         if (!endpoint) {
             return res.status(404).json({ error: 'Endpoint not found' });
@@ -106,23 +104,29 @@ router.patch('/endpoints/:id', authenticateToken, async (req: Request, res: Resp
         const { id } = req.params;
         const { summary, description, tags } = req.body;
 
-        const endpoint = endpoints.get(id);
+        // Use database lookup
+        const endpoint = await EndpointStore.findById(id);
         if (!endpoint) {
             return res.status(404).json({ error: 'Endpoint not found' });
         }
 
-        // Update fields
-        if (summary !== undefined) endpoint.summary = summary;
-        if (description !== undefined) endpoint.description = description;
-        if (tags !== undefined) endpoint.tags = tags;
+        // Update fields in database
+        const updates: any = {};
+        if (summary !== undefined) updates.summary = summary;
+        if (description !== undefined) updates.description = description;
+        if (tags !== undefined) updates.tags = tags;
 
+        await EndpointStore.update(id, updates);
+
+        // Return updated endpoint
+        const updated = await EndpointStore.findById(id);
         res.json({
-            id: endpoint.id,
-            path: endpoint.path,
-            method: endpoint.method,
-            summary: endpoint.summary,
-            description: endpoint.description,
-            tags: endpoint.tags
+            id: updated!.id,
+            path: updated!.path,
+            method: updated!.method,
+            summary: updated!.summary,
+            description: updated!.description,
+            tags: updated!.tags
         });
     } catch (error) {
         console.error('Update endpoint error:', error);
@@ -137,13 +141,14 @@ router.patch('/endpoints/:id', authenticateToken, async (req: Request, res: Resp
 router.post('/endpoints/:id/generate', authenticateToken, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const endpoint = endpoints.get(id);
+        // Use database lookup
+        const endpoint = await EndpointStore.findById(id);
 
         if (!endpoint) {
             return res.status(404).json({ error: 'Endpoint not found' });
         }
 
-        console.log(`🤖 Generatng docs for ${endpoint.method} ${endpoint.path}...`);
+        console.log(`🤖 Generating docs for ${endpoint.method} ${endpoint.path}...`);
 
         // Call AI Service
         try {
@@ -160,23 +165,16 @@ router.post('/endpoints/:id/generate', authenticateToken, async (req: Request, r
             if (result.success && result.documentation) {
                 const doc = result.documentation;
 
-                // Update endpoint with generated docs
-                endpoint.summary = doc.summary || endpoint.summary;
-                endpoint.description = doc.description || endpoint.description;
+                // Update endpoint in database with generated docs
+                const updates: any = {};
+                if (doc.summary) updates.summary = doc.summary;
+                if (doc.description) updates.description = doc.description;
+                if (doc.parameters && doc.parameters.length > 0) updates.parameters = doc.parameters;
+                if (doc.request_body) updates.requestBody = doc.request_body;
+                if (doc.responses && doc.responses.length > 0) updates.responses = doc.responses;
 
-                if (doc.parameters && doc.parameters.length > 0) {
-                    endpoint.parameters = doc.parameters;
-                }
-
-                if (doc.request_body) {
-                    endpoint.requestBody = doc.request_body;
-                }
-
-                if (doc.responses && doc.responses.length > 0) {
-                    endpoint.responses = doc.responses;
-                }
-
-                console.log(`✅ AI Docs generated for ${endpoint.path}`);
+                await EndpointStore.update(id, updates);
+                console.log(`✅ AI Docs generated and saved for ${endpoint.path}`);
 
                 res.json({
                     id: endpoint.id,
