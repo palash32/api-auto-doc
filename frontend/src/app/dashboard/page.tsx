@@ -204,8 +204,10 @@ const RepoCard = ({ repo }: { repo: Repository }) => {
                     onClick={async (e) => {
                         e.stopPropagation();
                         try {
+                            const token = localStorage.getItem('token');
                             await fetch(`${API_BASE_URL}/api/repositories/${repo.id}/scan`, {
                                 method: 'POST',
+                                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
                             });
                             alert('Scan initiated! Please refresh in a moment.');
                         } catch (error) {
