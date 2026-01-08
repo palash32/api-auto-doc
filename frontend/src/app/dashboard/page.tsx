@@ -26,22 +26,14 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { SkeletonCard, SkeletonStatCard } from "@/components/ui/skeleton";
 import { GsapRegistry } from "@/lib/gsap-registry";
-import { api, Repository } from "@/lib/api";
+import { api, Repository, DashboardStats, ActivityItem } from "@/lib/api";
 import { AddRepositoryModal } from "@/components/add-repository-modal";
-import { ActivityFeed, DEMO_ACTIVITIES } from "@/components/activity-feed";
+import { ActivityFeed } from "@/components/activity-feed";
 import Link from "next/link";
 import { API_BASE_URL } from "@/lib/api";
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger, Flip);
-
-// --- Mock Data ---
-const HEALTH_STATS = [
-    { label: "System Uptime", value: "99.99%", trend: "+0.01%", color: "text-emerald-400" },
-    { label: "Avg Latency", value: "42ms", trend: "-5ms", color: "text-blue-400" },
-    { label: "API Requests", value: "1.2M", trend: "+12%", color: "text-purple-400" },
-    { label: "Security Score", value: "A+", trend: "Stable", color: "text-cyan-400" },
-];
 
 // --- Components ---
 
@@ -122,7 +114,14 @@ const Sidebar = ({ collapsed, setCollapsed, userName }: { collapsed: boolean; se
     );
 };
 
-const StatCard = ({ stat, index }: { stat: typeof HEALTH_STATS[0]; index: number }) => {
+interface HealthStat {
+    label: string;
+    value: string;
+    trend: string;
+    color: string;
+}
+
+const StatCard = ({ stat, index }: { stat: HealthStat; index: number }) => {
     // Deterministic width based on index to avoid hydration mismatch
     const progressWidth = [75, 82, 68, 90][index % 4];
 
@@ -238,6 +237,16 @@ export default function DashboardPage() {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
+    // Real-time dashboard data
+    const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
+        totalRepositories: 0,
+        totalEndpoints: 0,
+        avgHealthScore: 0,
+        lastScanTime: null,
+        scanningCount: 0
+    });
+    const [activities, setActivities] = useState<ActivityItem[]>([]);
+
     // Demo notifications
     const [notifications, setNotifications] = useState([
         { id: 1, title: "Scan Complete", message: "fastapi repository has been scanned", time: "2m ago", read: false },
@@ -291,6 +300,10 @@ export default function DashboardPage() {
         }
 
         fetchRepos();
+
+        // Fetch dashboard stats and activity
+        api.getDashboardStats().then(setDashboardStats);
+        api.getDashboardActivity().then(setActivities);
     }, []);
 
     // GSAP Animations
@@ -498,7 +511,32 @@ export default function DashboardPage() {
 
                 {/* Hero Stats */}
                 <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                    {HEALTH_STATS.map((stat, i) => (
+                    {[
+                        {
+                            label: "Total Repositories",
+                            value: String(dashboardStats.totalRepositories),
+                            trend: dashboardStats.scanningCount > 0 ? `${dashboardStats.scanningCount} scanning` : "All complete",
+                            color: "text-emerald-400"
+                        },
+                        {
+                            label: "APIs Discovered",
+                            value: String(dashboardStats.totalEndpoints),
+                            trend: dashboardStats.totalEndpoints > 0 ? "+documented" : "Scan repos",
+                            color: "text-blue-400"
+                        },
+                        {
+                            label: "Currently Scanning",
+                            value: String(dashboardStats.scanningCount),
+                            trend: dashboardStats.scanningCount > 0 ? "In progress" : "Idle",
+                            color: "text-purple-400"
+                        },
+                        {
+                            label: "Health Score",
+                            value: `${dashboardStats.avgHealthScore}%`,
+                            trend: dashboardStats.avgHealthScore >= 80 ? "Good" : dashboardStats.avgHealthScore >= 50 ? "Fair" : "Needs work",
+                            color: "text-cyan-400"
+                        },
+                    ].map((stat: HealthStat, i: number) => (
                         <StatCard key={i} stat={stat} index={i} />
                     ))}
                 </section>
@@ -564,7 +602,20 @@ export default function DashboardPage() {
                     {/* Activity Feed Sidebar - 1 column */}
                     <aside className="lg:col-span-1">
                         <GlassCard className="p-4 sticky top-24">
-                            <ActivityFeed activities={DEMO_ACTIVITIES} maxItems={5} />
+                            <ActivityFeed
+                                activities={activities.map(a => ({
+                                    id: a.id,
+                                    type: a.type,
+                                    title: a.title,
+                                    description: a.description || '',
+                                    timestamp: new Date(a.createdAt),
+                                    status: a.type === 'scan_completed' || a.type === 'repo_added' ? 'success' :
+                                        a.type === 'scan_started' ? 'pending' :
+                                            a.type === 'scan_failed' ? 'failed' : undefined,
+                                    metadata: a.metadata
+                                }))}
+                                maxItems={5}
+                            />
                         </GlassCard>
                     </aside>
                 </div>

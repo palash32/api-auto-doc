@@ -48,6 +48,24 @@ export interface PaginatedEndpoints {
     endpoints: EndpointSummary[];
 }
 
+export interface DashboardStats {
+    totalRepositories: number;
+    totalEndpoints: number;
+    avgHealthScore: number;
+    lastScanTime: string | null;
+    scanningCount: number;
+}
+
+export interface ActivityItem {
+    id: string;
+    type: 'scan_started' | 'scan_completed' | 'scan_failed' | 'repo_added' | 'repo_deleted' | 'docs_generated';
+    title: string;
+    description?: string;
+    repositoryId?: string;
+    metadata?: Record<string, any>;
+    createdAt: string;
+}
+
 export const api = {
     // Repository endpoints
     async getRepositories(): Promise<Repository[]> {
@@ -172,6 +190,41 @@ export const api = {
         } catch (error) {
             console.error('Error generating docs:', error);
             throw error;
+        }
+    },
+
+    // Dashboard endpoints
+    async getDashboardStats(): Promise<DashboardStats> {
+        try {
+            const token = getAuthToken();
+            const res = await fetch(`${API_BASE_URL}/api/dashboard/stats`, {
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+            if (!res.ok) throw new Error('Failed to fetch dashboard stats');
+            return res.json();
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error);
+            return {
+                totalRepositories: 0,
+                totalEndpoints: 0,
+                avgHealthScore: 0,
+                lastScanTime: null,
+                scanningCount: 0
+            };
+        }
+    },
+
+    async getDashboardActivity(limit: number = 10): Promise<ActivityItem[]> {
+        try {
+            const token = getAuthToken();
+            const res = await fetch(`${API_BASE_URL}/api/dashboard/activity?limit=${limit}`, {
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+            if (!res.ok) throw new Error('Failed to fetch activity');
+            return res.json();
+        } catch (error) {
+            console.error('Error fetching activity:', error);
+            return [];
         }
     }
 };

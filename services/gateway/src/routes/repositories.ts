@@ -8,7 +8,7 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { authenticateToken } from '../middleware/auth';
-import { repositories, endpoints, Repository, Endpoint, RepoStore, EndpointStore } from '../store';
+import { repositories, endpoints, Repository, Endpoint, RepoStore, EndpointStore, ActivityStore, Activity } from '../store';
 
 const router = Router();
 const SCANNER_URL = process.env.SCANNER_URL || 'http://localhost:3001';
@@ -24,6 +24,18 @@ async function triggerScan(repo: Repository) {
         // Update status to scanning in database
         await RepoStore.update(repo.id, { scanStatus: 'scanning' });
 
+        // Log scan_started activity
+        await ActivityStore.create({
+            id: uuidv4(),
+            organizationId: repo.organizationId,
+            repositoryId: repo.id,
+            type: 'scan_started',
+            title: 'Scanning...',
+            description: repo.fullName,
+            metadata: { repoName: repo.fullName },
+            createdAt: new Date()
+        });
+
         // 1. Start Scan
         const startRes = await axios.post(`${SCANNER_URL}/scan`, {
             url: repo.url,
@@ -31,7 +43,7 @@ async function triggerScan(repo: Repository) {
         });
 
         const scanId = startRes.data.scan_id;
-        console.log(`✅ Scan started for ${repo.fullName} (ID: ${scanId})`);
+        console.log(`✅ Scan started for ${repo.fullName} (ID: ${scanId})`);;
 
         // 2. Poll for completion
         const pollInterval = setInterval(async () => {
@@ -77,11 +89,36 @@ async function triggerScan(repo: Repository) {
                         await EndpointStore.create(newEndpoint);
                     }
 
+                    // Log scan_completed activity
+                    await ActivityStore.create({
+                        id: uuidv4(),
+                        organizationId: repo.organizationId,
+                        repositoryId: repo.id,
+                        type: 'scan_completed',
+                        title: 'Scan completed',
+                        description: repo.fullName,
+                        metadata: { repoName: repo.fullName, endpointCount: detectedEndpoints.length },
+                        createdAt: new Date()
+                    });
+
                     console.log(`💾 Saved ${detectedEndpoints.length} endpoints for ${repo.fullName} to database`);
 
                 } else if (status === 'failed') {
                     clearInterval(pollInterval);
                     await RepoStore.update(repo.id, { scanStatus: 'failed' });
+
+                    // Log scan_failed activity
+                    await ActivityStore.create({
+                        id: uuidv4(),
+                        organizationId: repo.organizationId,
+                        repositoryId: repo.id,
+                        type: 'scan_failed',
+                        title: 'Scan failed',
+                        description: `Could not parse ${repo.fullName}`,
+                        metadata: { repoName: repo.fullName },
+                        createdAt: new Date()
+                    });
+
                     console.error(`❌ Scan failed for ${repo.fullName}`);
                 }
             } catch (err) {
@@ -93,6 +130,18 @@ async function triggerScan(repo: Repository) {
     } catch (error) {
         console.error('Failed to trigger scan:', error);
         await RepoStore.update(repo.id, { scanStatus: 'failed' });
+
+        // Log scan_failed activity for connection errors
+        await ActivityStore.create({
+            id: uuidv4(),
+            organizationId: repo.organizationId,
+            repositoryId: repo.id,
+            type: 'scan_failed',
+            title: 'Scan failed',
+            description: `Could not connect to scanner for ${repo.fullName}`,
+            metadata: { repoName: repo.fullName, error: String(error) },
+            createdAt: new Date()
+        });
     }
 }
 
@@ -167,6 +216,18 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
 
         // Save to database
         await RepoStore.create(repo);
+
+        // Log repo_added activity
+        await ActivityStore.create({
+            id: uuidv4(),
+            organizationId: repo.organizationId,
+            repositoryId: repo.id,
+            type: 'repo_added',
+            title: 'Repository connected',
+            description: repo.fullName,
+            metadata: { repoName: repo.fullName, url: repo.url },
+            createdAt: new Date()
+        });
 
         // Queue scan
         triggerScan(repo);

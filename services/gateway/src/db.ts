@@ -81,10 +81,23 @@ export async function initializeDatabase(): Promise<void> {
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
+            CREATE TABLE IF NOT EXISTS activities (
+                id UUID PRIMARY KEY,
+                organization_id UUID REFERENCES organizations(id),
+                repository_id UUID REFERENCES repositories(id),
+                type VARCHAR(50) NOT NULL,
+                title VARCHAR(255) NOT NULL,
+                description TEXT,
+                metadata JSONB DEFAULT '{}',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
             CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
             CREATE INDEX IF NOT EXISTS idx_users_github_id ON users(github_id);
             CREATE INDEX IF NOT EXISTS idx_repositories_org ON repositories(organization_id);
             CREATE INDEX IF NOT EXISTS idx_endpoints_repo ON endpoints(repository_id);
+            CREATE INDEX IF NOT EXISTS idx_activities_org ON activities(organization_id);
+            CREATE INDEX IF NOT EXISTS idx_activities_created ON activities(created_at DESC);
         `);
         console.log('✅ Database schema initialized');
     } catch (error) {

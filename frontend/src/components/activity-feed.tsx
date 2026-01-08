@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 export interface ActivityItem {
     id: string;
-    type: "scan_started" | "scan_completed" | "scan_failed" | "repo_added" | "docs_generated";
+    type: "scan_started" | "scan_completed" | "scan_failed" | "repo_added" | "repo_deleted" | "docs_generated";
     title: string;
     description: string;
     timestamp: Date;

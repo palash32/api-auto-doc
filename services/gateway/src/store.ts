@@ -55,17 +55,30 @@ export interface Endpoint {
     codeSnippet?: string;
 }
 
+export interface Activity {
+    id: string;
+    organizationId: string;
+    repositoryId?: string;
+    type: 'scan_started' | 'scan_completed' | 'scan_failed' | 'repo_added' | 'repo_deleted' | 'docs_generated';
+    title: string;
+    description?: string;
+    metadata?: Record<string, any>;
+    createdAt: Date;
+}
+
 // In-Memory Fallback Stores
 const memUsers = new Map<string, User>();
 const memOrganizations = new Map<string, Organization>();
 const memRepositories = new Map<string, Repository>();
 const memEndpoints = new Map<string, Endpoint>();
+const memActivities = new Map<string, Activity>();
 
 // Legacy exports for compatibility
 export const users = memUsers;
 export const organizations = memOrganizations;
 export const repositories = memRepositories;
 export const endpoints = memEndpoints;
+export const activities = memActivities;
 
 // =============================================================================
 // STORE OPERATIONS (Database or In-Memory)
@@ -306,6 +319,45 @@ export const EndpointStore = {
     }
 };
 
+// --- Activities ---
+export const ActivityStore = {
+    async create(activity: Activity): Promise<Activity> {
+        if (!isUsingDatabase()) {
+            memActivities.set(activity.id, activity);
+            return activity;
+        }
+        await execute(
+            `INSERT INTO activities (id, organization_id, repository_id, type, title, description, metadata, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [
+                activity.id,
+                activity.organizationId,
+                activity.repositoryId || null,
+                activity.type,
+                activity.title,
+                activity.description || null,
+                JSON.stringify(activity.metadata || {}),
+                activity.createdAt
+            ]
+        );
+        return activity;
+    },
+
+    async findByOrg(orgId: string, limit: number = 10): Promise<Activity[]> {
+        if (!isUsingDatabase()) {
+            return Array.from(memActivities.values())
+                .filter(a => a.organizationId === orgId)
+                .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+                .slice(0, limit);
+        }
+        const rows = await query<any>(
+            'SELECT * FROM activities WHERE organization_id = $1 ORDER BY created_at DESC LIMIT $2',
+            [orgId, limit]
+        );
+        return rows.map(mapDbActivity);
+    }
+};
+
 // =============================================================================
 // MAPPERS (Database rows to TypeScript objects)
 // =============================================================================
@@ -351,6 +403,19 @@ function mapDbEndpoint(row: any): Endpoint {
         tags: row.tags || [],
         authRequired: row.auth_required || false,
         filePath: row.source_file || ''
+    };
+}
+
+function mapDbActivity(row: any): Activity {
+    return {
+        id: row.id,
+        organizationId: row.organization_id,
+        repositoryId: row.repository_id,
+        type: row.type,
+        title: row.title,
+        description: row.description,
+        metadata: row.metadata || {},
+        createdAt: new Date(row.created_at)
     };
 }
 
