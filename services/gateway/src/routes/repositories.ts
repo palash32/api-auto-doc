@@ -20,7 +20,9 @@ const SCANNER_URL = process.env.SCANNER_URL || 'http://localhost:3001';
 async function triggerScan(repo: Repository) {
     try {
         console.log(`🚀 Triggering scan for ${repo.fullName} at ${SCANNER_URL}`);
-        repo.scanStatus = 'scanning';
+
+        // Update status to scanning in database
+        await RepoStore.update(repo.id, { scanStatus: 'scanning' });
 
         // 1. Start Scan
         const startRes = await axios.post(`${SCANNER_URL}/scan`, {
@@ -45,20 +47,18 @@ async function triggerScan(repo: Repository) {
                     const resultRes = await axios.get(`${SCANNER_URL}/scan/${scanId}/endpoints`);
                     const detectedEndpoints = resultRes.data.endpoints || [];
 
-                    // 4. Update Store
-                    repo.scanStatus = 'completed';
-                    repo.apiCount = detectedEndpoints.length;
-                    repo.lastScanned = new Date();
+                    // 4. Update Repository in database
+                    await RepoStore.update(repo.id, {
+                        scanStatus: 'completed',
+                        apiCount: detectedEndpoints.length,
+                        lastScanned: new Date()
+                    });
 
-                    // Clear old endpoints for this repo
-                    for (const [id, ep] of endpoints.entries()) {
-                        if (ep.repositoryId === repo.id) {
-                            endpoints.delete(id);
-                        }
-                    }
+                    // 5. Clear old endpoints for this repo from database
+                    await EndpointStore.deleteByRepo(repo.id);
 
-                    // Add new endpoints
-                    detectedEndpoints.forEach((ep: any) => {
+                    // 6. Add new endpoints to database
+                    for (const ep of detectedEndpoints) {
                         const newEndpoint: Endpoint = {
                             id: uuidv4(),
                             repositoryId: repo.id,
@@ -66,22 +66,22 @@ async function triggerScan(repo: Repository) {
                             method: ep.method,
                             summary: ep.description || `${ep.method} ${ep.path}`,
                             description: '',
-                            tags: [], // Scanner might detect tags, but simple for now
+                            tags: [],
                             parameters: ep.parameters || [],
                             requestBody: ep.body || null,
                             responses: [],
-                            authRequired: false, // Detect auth in scanner?
+                            authRequired: false,
                             filePath: ep.file_path,
                             codeSnippet: ep.code_snippet
                         };
-                        endpoints.set(newEndpoint.id, newEndpoint);
-                    });
+                        await EndpointStore.create(newEndpoint);
+                    }
 
-                    console.log(`💾 Saved ${detectedEndpoints.length} endpoints for ${repo.fullName}`);
+                    console.log(`💾 Saved ${detectedEndpoints.length} endpoints for ${repo.fullName} to database`);
 
                 } else if (status === 'failed') {
                     clearInterval(pollInterval);
-                    repo.scanStatus = 'failed';
+                    await RepoStore.update(repo.id, { scanStatus: 'failed' });
                     console.error(`❌ Scan failed for ${repo.fullName}`);
                 }
             } catch (err) {
@@ -92,7 +92,7 @@ async function triggerScan(repo: Repository) {
 
     } catch (error) {
         console.error('Failed to trigger scan:', error);
-        repo.scanStatus = 'failed';
+        await RepoStore.update(repo.id, { scanStatus: 'failed' });
     }
 }
 
