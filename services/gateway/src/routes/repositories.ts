@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { authenticateToken } from '../middleware/auth';
 import { repositories, endpoints, Repository, Endpoint, RepoStore, EndpointStore, ActivityStore, Activity } from '../store';
+import { queueScan, completeScan, hasActiveScan } from '../scan-queue';
 
 const router = Router();
 const SCANNER_URL = process.env.SCANNER_URL || 'http://localhost:3001';

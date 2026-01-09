@@ -328,11 +328,11 @@ export default function DashboardPage() {
         api.getDashboardStats().then(setDashboardStats);
         api.getDashboardActivity().then(setActivities);
 
-        // Set up periodic refresh for real-time updates (every 10 seconds)
+        // Set up periodic refresh for real-time updates (every 30 seconds for scalability)
         const refreshInterval = setInterval(() => {
             api.getDashboardStats().then(setDashboardStats);
             api.getDashboardActivity().then(setActivities);
-        }, 10000);
+        }, 30000);
 
         // Cleanup interval on unmount
         return () => clearInterval(refreshInterval);
