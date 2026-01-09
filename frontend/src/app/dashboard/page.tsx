@@ -19,7 +19,10 @@ import {
     Menu,
     Bell,
     Play,
-    Github
+    Github,
+    Zap,
+    Network,
+    Database
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -68,13 +71,16 @@ const Sidebar = ({ collapsed, setCollapsed, userName }: { collapsed: boolean; se
                 </button>
             </div>
 
-            <nav className="flex-1 px-4 py-6 space-y-2">
+            <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
                 {[
                     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", active: true },
                     { icon: GitBranch, label: "Repositories", href: "/apis" },
                     { icon: Play, label: "Playground", href: "/playground" },
-                    { icon: Activity, label: "Monitoring", href: "/health" },
-                    { icon: Shield, label: "Security", href: "/settings/security" },
+                    { icon: Activity, label: "Health", href: "/health" },
+                    { icon: Zap, label: "Performance", href: "/performance" },
+                    { icon: Network, label: "Dependencies", href: "/dependencies" },
+                    { icon: Shield, label: "Security", href: "/security" },
+                    { icon: Database, label: "Database", href: "/database" },
                     { icon: Settings, label: "Settings", href: "/settings" },
                 ].map((item, idx) => (
                     <Link
