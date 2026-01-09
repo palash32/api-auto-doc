@@ -21,6 +21,7 @@ interface ActivityFeedProps {
     activities: ActivityItem[];
     className?: string;
     maxItems?: number;
+    onViewAll?: () => void;
 }
 
 const getActivityIcon = (type: ActivityItem["type"], status?: ActivityItem["status"]) => {
@@ -70,7 +71,8 @@ const formatTimeAgo = (date: Date): string => {
 export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     activities,
     className,
-    maxItems = 5
+    maxItems = 5,
+    onViewAll
 }) => {
     const [mounted, setMounted] = useState(false);
 
@@ -144,7 +146,10 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                 ))}
             </div>
             {activities.length > maxItems && (
-                <button className="w-full text-center text-xs text-blue-400 hover:text-blue-300 transition-colors py-2">
+                <button
+                    onClick={onViewAll}
+                    className="w-full text-center text-xs text-blue-400 hover:text-blue-300 transition-colors py-2"
+                >
                     View all activity →
                 </button>
             )}

@@ -246,14 +246,16 @@ export default function DashboardPage() {
         scanningCount: 0
     });
     const [activities, setActivities] = useState<ActivityItem[]>([]);
+    const [readNotificationIds, setReadNotificationIds] = useState<Set<string>>(new Set());
+    const [expandedActivity, setExpandedActivity] = useState(false);
 
-    // Notifications derived from activities
+    // Notifications derived from activities with read state
     const notifications = activities.slice(0, 5).map((a, i) => ({
-        id: i + 1,
+        id: a.id,
         title: a.title,
         message: a.description || '',
         time: formatTimeAgo(new Date(a.createdAt)),
-        read: i > 2 // Mark first 3 as unread
+        read: readNotificationIds.has(a.id)
     }));
 
     // Format time ago helper
@@ -270,8 +272,15 @@ export default function DashboardPage() {
         return date.toLocaleDateString();
     }
 
-    // Mark all notifications as read (no-op since derived from activities)
-    const markAllRead = () => { };
+    // Mark all notifications as read
+    const markAllRead = () => {
+        setReadNotificationIds(new Set(activities.map(a => a.id)));
+    };
+
+    // Expand activity feed to show all items
+    const handleViewAllActivity = () => {
+        setExpandedActivity(true);
+    };
 
     // Filter repositories based on search
     const filteredRepos = repositories.filter(repo =>
@@ -637,7 +646,8 @@ export default function DashboardPage() {
                                             a.type === 'scan_failed' ? 'failed' : undefined,
                                     metadata: a.metadata
                                 }))}
-                                maxItems={5}
+                                maxItems={expandedActivity ? 50 : 5}
+                                onViewAll={handleViewAllActivity}
                             />
                         </GlassCard>
                     </aside>
