@@ -247,17 +247,31 @@ export default function DashboardPage() {
     });
     const [activities, setActivities] = useState<ActivityItem[]>([]);
 
-    // Demo notifications
-    const [notifications, setNotifications] = useState([
-        { id: 1, title: "Scan Complete", message: "fastapi repository has been scanned", time: "2m ago", read: false },
-        { id: 2, title: "New Endpoints", message: "5 new endpoints discovered", time: "1h ago", read: false },
-        { id: 3, title: "Health Alert", message: "Documentation coverage below 80%", time: "3h ago", read: true },
-    ]);
+    // Notifications derived from activities
+    const notifications = activities.slice(0, 5).map((a, i) => ({
+        id: i + 1,
+        title: a.title,
+        message: a.description || '',
+        time: formatTimeAgo(new Date(a.createdAt)),
+        read: i > 2 // Mark first 3 as unread
+    }));
 
-    // Mark all notifications as read
-    const markAllRead = () => {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    };
+    // Format time ago helper
+    function formatTimeAgo(date: Date): string {
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+        if (diffMins < 1) return "Just now";
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return date.toLocaleDateString();
+    }
+
+    // Mark all notifications as read (no-op since derived from activities)
+    const markAllRead = () => { };
 
     // Filter repositories based on search
     const filteredRepos = repositories.filter(repo =>
@@ -304,6 +318,15 @@ export default function DashboardPage() {
         // Fetch dashboard stats and activity
         api.getDashboardStats().then(setDashboardStats);
         api.getDashboardActivity().then(setActivities);
+
+        // Set up periodic refresh for real-time updates (every 10 seconds)
+        const refreshInterval = setInterval(() => {
+            api.getDashboardStats().then(setDashboardStats);
+            api.getDashboardActivity().then(setActivities);
+        }, 10000);
+
+        // Cleanup interval on unmount
+        return () => clearInterval(refreshInterval);
     }, []);
 
     // GSAP Animations
