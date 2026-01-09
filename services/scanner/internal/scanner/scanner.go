@@ -207,6 +207,7 @@ func GetEndpoints(scanID string) ([]Endpoint, error) {
 }
 
 // cloneRepository clones a Git repository to a temporary directory
+// It tries the specified branch first, then falls back to main, master, and finally no branch (default)
 func cloneRepository(url, branch, token string) (string, error) {
 	// Create temp directory
 	tmpDir, err := os.MkdirTemp("", "scanner-*")
@@ -214,34 +215,74 @@ func cloneRepository(url, branch, token string) (string, error) {
 		return "", fmt.Errorf("failed to create temp dir: %w", err)
 	}
 
-	// Prepare clone options
-	cloneOptions := &git.CloneOptions{
-		URL:      url,
-		Progress: nil, // Silent clone
-	}
-
-	// Add branch if specified
+	// Branches to try in order
+	branchesToTry := []string{}
 	if branch != "" {
-		cloneOptions.ReferenceName = plumbing.NewBranchReferenceName(branch)
+		branchesToTry = append(branchesToTry, branch)
 	}
+	// Add common default branches as fallbacks
+	branchesToTry = append(branchesToTry, "main", "master", "")
 
-	// Add authentication if token provided
-	if token != "" {
-		cloneOptions.Auth = &http.BasicAuth{
-			Username: "x-access-token", // GitHub token auth
-			Password: token,
+	// Remove duplicates
+	seen := make(map[string]bool)
+	uniqueBranches := []string{}
+	for _, b := range branchesToTry {
+		if !seen[b] {
+			seen[b] = true
+			uniqueBranches = append(uniqueBranches, b)
 		}
 	}
 
-	// Clone the repository
-	log.Printf("📦 Cloning repository: %s", url)
-	_, err = git.PlainClone(tmpDir, false, cloneOptions)
-	if err != nil {
-		os.RemoveAll(tmpDir) // Cleanup on error
-		return "", fmt.Errorf("failed to clone repository: %w", err)
+	var lastErr error
+	for _, tryBranch := range uniqueBranches {
+		// Clean up previous attempt
+		os.RemoveAll(tmpDir)
+		tmpDir, err = os.MkdirTemp("", "scanner-*")
+		if err != nil {
+			return "", fmt.Errorf("failed to create temp dir: %w", err)
+		}
+
+		// Prepare clone options
+		cloneOptions := &git.CloneOptions{
+			URL:      url,
+			Progress: nil, // Silent clone
+		}
+
+		// Add branch if specified
+		if tryBranch != "" {
+			cloneOptions.ReferenceName = plumbing.NewBranchReferenceName(tryBranch)
+			log.Printf("📦 Cloning repository: %s (branch: %s)", url, tryBranch)
+		} else {
+			log.Printf("📦 Cloning repository: %s (default branch)", url)
+		}
+
+		// Add authentication if token provided
+		if token != "" {
+			cloneOptions.Auth = &http.BasicAuth{
+				Username: "x-access-token", // GitHub token auth
+				Password: token,
+			}
+		}
+
+		// Clone the repository
+		_, err = git.PlainClone(tmpDir, false, cloneOptions)
+		if err == nil {
+			// Success!
+			if tryBranch != "" {
+				log.Printf("✅ Successfully cloned with branch: %s", tryBranch)
+			} else {
+				log.Printf("✅ Successfully cloned with default branch")
+			}
+			return tmpDir, nil
+		}
+
+		lastErr = err
+		log.Printf("⚠️ Failed to clone with branch '%s': %v", tryBranch, err)
 	}
 
-	return tmpDir, nil
+	// All attempts failed
+	os.RemoveAll(tmpDir) // Cleanup
+	return "", fmt.Errorf("failed to clone repository: %w", lastErr)
 }
 
 // hasAPIIndicators performs Stage 1 pre-filtering
