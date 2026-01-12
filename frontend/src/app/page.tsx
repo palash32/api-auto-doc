@@ -26,84 +26,35 @@ gsap.registerPlugin(ScrollTrigger);
 const FEATURES = [
     {
         title: "Auto-Discovery",
-        description: "Automatically scans your codebase to find all APIs across GitHub, GitLab, and Bitbucket.",
+        description: "Automatically scans your GitHub repositories to find all API endpoints instantly.",
         icon: Search,
         color: "text-blue-400",
         bg: "bg-blue-500/10"
     },
     {
         title: "Live Documentation",
-        description: "Docs that update themselves. Never worry about outdated API references again.",
+        description: "Beautiful, interactive API docs generated automatically from your code.",
         icon: Code2,
         color: "text-purple-400",
         bg: "bg-purple-500/10"
     },
     {
-        title: "Dependency Mapping",
-        description: "Visualize how your microservices interact and detect circular dependencies instantly.",
+        title: "Multi-Language Support",
+        description: "Works with Python, JavaScript, TypeScript, Go, Ruby, PHP, and more frameworks.",
         icon: GitBranch,
         color: "text-emerald-400",
         bg: "bg-emerald-500/10"
     },
-    {
-        title: "Security Scanning",
-        description: "Detect sensitive data exposure and authentication gaps before they reach production.",
-        icon: Shield,
-        color: "text-red-400",
-        bg: "bg-red-500/10"
-    },
-    {
-        title: "Performance Metrics",
-        description: "Track API latency, error rates, and uptime with real-time monitoring dashboards.",
-        icon: Zap,
-        color: "text-yellow-400",
-        bg: "bg-yellow-500/10"
-    },
-    {
-        title: "Database Insights",
-        description: "Understand which database tables are accessed by each API endpoint.",
-        icon: Database,
-        color: "text-cyan-400",
-        bg: "bg-cyan-500/10"
-    }
 ];
 
-const PRICING = [
-    {
-        name: "Starter",
-        price: "$0",
-        period: "forever",
-        features: ["5 Repositories", "Basic Documentation", "Daily Scans", "Community Support"],
-        cta: "Start for Free",
-        popular: false
-    },
-    {
-        name: "Pro",
-        price: "$49",
-        period: "per dev/mo",
-        features: ["Unlimited Repos", "Advanced AI Docs", "Real-time Scans", "Dependency Graph", "Priority Support"],
-        cta: "Start Trial",
-        popular: true
-    },
-    {
-        name: "Enterprise",
-        price: "Custom",
-        period: "contact us",
-        features: ["SSO & SAML", "On-premise Deployment", "Custom Integrations", "Dedicated Success Manager", "SLA Guarantee"],
-        cta: "Contact Sales",
-        popular: false
-    }
-];
+// Pricing will be added in future updates
 
 const COMPARISON = [
     { feature: "Auto API Discovery", autodoc: true, postman: false, swagger: false, readme: false },
-    { feature: "AI-Powered Documentation", autodoc: true, postman: false, swagger: false, readme: true },
-    { feature: "Real-Time Updates", autodoc: true, postman: false, swagger: false, readme: false },
     { feature: "Code-First Approach", autodoc: true, postman: false, swagger: true, readme: false },
-    { feature: "Interactive Playground", autodoc: true, postman: true, swagger: true, readme: true },
-    { feature: "Dependency Mapping", autodoc: true, postman: false, swagger: false, readme: false },
-    { feature: "Health Monitoring", autodoc: true, postman: false, swagger: false, readme: false },
+    { feature: "Multi-Language Support", autodoc: true, postman: true, swagger: true, readme: true },
     { feature: "Zero Configuration", autodoc: true, postman: false, swagger: false, readme: false },
+    { feature: "GitHub Integration", autodoc: true, postman: true, swagger: false, readme: true },
 ];
 
 const TESTIMONIALS = [
@@ -190,20 +141,6 @@ export default function LandingPage() {
             clearProps: "all"
         });
 
-        // Pricing Scroll Animation
-        gsap.from(".pricing-card", {
-            scrollTrigger: {
-                trigger: ".pricing-section",
-                start: "top 75%",
-            },
-            y: 60,
-            opacity: 0,
-            duration: 0.8,
-            stagger: 0.15,
-            ease: "back.out(1.2)",
-            clearProps: "all"
-        });
-
     }, { scope: containerRef });
 
     return (
@@ -221,8 +158,7 @@ export default function LandingPage() {
                     </div>
                     <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
                         <Link href="#features" className="hover:text-white transition-colors">Features</Link>
-                        <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
-                        <Link href="/docs" className="hover:text-white transition-colors">Documentation</Link>
+                        <Link href="#how-it-works" className="hover:text-white transition-colors">How It Works</Link>
                     </div>
                     <div className="flex items-center gap-4">
                         <Link href="/login">
@@ -550,10 +486,10 @@ export default function LandingPage() {
                     {/* Stats Row */}
                     <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center">
                         {[
-                            { value: "500+", label: "Teams using AutoDocAI" },
-                            { value: "50K+", label: "APIs documented" },
-                            { value: "10hrs", label: "Saved per dev/week" },
-                            { value: "99.9%", label: "Uptime SLA" }
+                            { value: "100%", label: "Free during beta" },
+                            { value: "30s", label: "Setup time" },
+                            { value: "5+", label: "Languages supported" },
+                            { value: "∞", label: "APIs documented" }
                         ].map((stat, idx) => (
                             <div key={idx}>
                                 <div className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
@@ -566,53 +502,19 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Pricing Section */}
-            <section id="pricing" className="py-32 relative bg-gradient-to-b from-transparent to-black/50">
-                <div className="container mx-auto px-6">
-                    <div className="text-center mb-20">
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, transparent pricing</h2>
-                        <p className="text-muted-foreground">Start for free, scale as you grow.</p>
-                    </div>
-
-                    <div className="pricing-section grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                        {PRICING.map((plan, idx) => (
-                            <GlassCard
-                                key={idx}
-                                className={`pricing-card p-8 flex flex-col ${plan.popular ? 'border-blue-500/50 bg-blue-500/5 ring-1 ring-blue-500/20' : ''}`}
-                                hoverEffect={true}
-                                tiltEffect={true}
-                            >
-                                {plan.popular && (
-                                    <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">
-                                        POPULAR
-                                    </div>
-                                )}
-                                <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
-                                <div className="flex items-baseline gap-1 mb-6">
-                                    <span className="text-4xl font-bold text-white">{plan.price}</span>
-                                    <span className="text-muted-foreground text-sm">{plan.period}</span>
-                                </div>
-
-                                <ul className="space-y-4 mb-8 flex-1">
-                                    {plan.features.map((feat, i) => (
-                                        <li key={i} className="flex items-center gap-3 text-sm text-gray-300">
-                                            <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 text-blue-400">
-                                                <Check size={12} />
-                                            </div>
-                                            {feat}
-                                        </li>
-                                    ))}
-                                </ul>
-
-                                <MagneticButton
-                                    variant={plan.popular ? "primary" : "secondary"}
-                                    className="w-full justify-center"
-                                >
-                                    {plan.cta}
-                                </MagneticButton>
-                            </GlassCard>
-                        ))}
-                    </div>
+            {/* CTA Section - Free to Use */}
+            <section className="py-24 relative bg-gradient-to-b from-transparent to-black/50">
+                <div className="container mx-auto px-6 text-center">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to streamline your API docs?</h2>
+                    <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
+                        Connect your GitHub repository in 30 seconds and get beautiful,
+                        auto-generated documentation. No credit card required.
+                    </p>
+                    <Link href="/login">
+                        <MagneticButton className="px-8 py-4 text-lg shadow-[0_0_30px_rgba(0,113,227,0.3)]">
+                            Get Started Free <ArrowRight className="ml-2 w-5 h-5" />
+                        </MagneticButton>
+                    </Link>
                 </div>
             </section>
 
