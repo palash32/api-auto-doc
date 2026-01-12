@@ -404,13 +404,13 @@ func StartScan(scanID, url, branch, token string) {
 	endpoints[scanID] = []Endpoint{}
 	mu.Unlock()
 
-	log.Printf("\n" + strings.Repeat("=", 70))
+	log.Printf("\n%s", strings.Repeat("=", 70))
 	log.Printf("🔍 SCAN STARTED: %s", scanID)
 	log.Printf("📦 Repository: %s", url)
 	if branch != "" {
 		log.Printf("🌿 Branch: %s", branch)
 	}
-	log.Printf(strings.Repeat("=", 70))
+	log.Printf("%s", strings.Repeat("=", 70))
 
 	// Step 1: Clone repository
 	log.Printf("\n📥 STEP 1/4: Cloning repository...")
@@ -488,7 +488,7 @@ func StartScan(scanID, url, branch, token string) {
 	}
 
 	// Final summary
-	log.Printf("\n" + strings.Repeat("=", 70))
+	log.Printf("\n%s", strings.Repeat("=", 70))
 	log.Printf("✅ SCAN COMPLETED: %s", scanID)
 	log.Printf("📊 Summary:")
 	log.Printf("   • Total code files found: %d", len(allFiles))
@@ -496,7 +496,7 @@ func StartScan(scanID, url, branch, token string) {
 	log.Printf("   • Files processed: %d", processedFiles)
 	log.Printf("   • Endpoints discovered: %d", len(allEndpoints))
 	log.Printf("   • Duration: %v", time.Since(scans[scanID].StartedAt).Round(time.Millisecond))
-	log.Printf(strings.Repeat("=", 70) + "\n")
+	log.Printf("%s\n", strings.Repeat("=", 70))
 
 	// Update final status
 	mu.Lock()

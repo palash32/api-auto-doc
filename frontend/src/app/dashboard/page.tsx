@@ -15,6 +15,7 @@ import {
     ChevronRight,
     Plus,
     Terminal,
+    X,
     Shield,
     Menu,
     Bell,
@@ -32,6 +33,7 @@ import { GsapRegistry } from "@/lib/gsap-registry";
 import { api, Repository, DashboardStats, ActivityItem } from "@/lib/api";
 import { AddRepositoryModal } from "@/components/add-repository-modal";
 import { ActivityFeed } from "@/components/activity-feed";
+import { EmptyRepoCard } from "@/components/empty-repo-card";
 import Link from "next/link";
 import { API_BASE_URL } from "@/lib/api";
 
@@ -604,35 +606,17 @@ export default function DashboardPage() {
                                     <SkeletonCard key={i} className="min-h-[180px]" />
                                 ))
                             ) : filteredRepos.length > 0 ? (
-                                filteredRepos.map((repo) => (
-                                    <RepoCard key={repo.id} repo={repo} />
-                                ))
+                                <>
+                                    {filteredRepos.map((repo) => (
+                                        <RepoCard key={repo.id} repo={repo} />
+                                    ))}
+                                    {/* Add New Card - Consistent sizing */}
+                                    <EmptyRepoCard onClick={() => setIsModalOpen(true)} />
+                                </>
                             ) : (
                                 <div className="col-span-full">
-                                    <div
-                                        onClick={() => setIsModalOpen(true)}
-                                        className="group border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-between px-6 text-white/40 hover:text-white hover:border-primary/30 hover:bg-primary/5 cursor-pointer h-[180px] transition-all duration-300"
-                                    >
-                                        <p className="text-sm font-medium">Connect New Repository</p>
-                                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300">
-                                            <Plus size={24} />
-                                        </div>
-                                    </div>
+                                    <EmptyRepoCard onClick={() => setIsModalOpen(true)} variant="primary" />
                                 </div>
-                            )}
-
-                            {/* Add New Card Placeholder - Only show when repos exist */}
-                            {!loading && filteredRepos.length > 0 && (
-                                <GlassCard
-                                    onClick={() => setIsModalOpen(true)}
-                                    className="group border-dashed border-white/10 flex items-center justify-between px-6 text-white/40 hover:text-white hover:border-primary/30 hover:bg-primary/5 cursor-pointer min-h-[180px] transition-all duration-300"
-                                    hoverEffect={false}
-                                >
-                                    <p className="text-sm font-medium">Connect New Repository</p>
-                                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/10 group-hover:text-primary transition-all duration-300">
-                                        <Plus size={24} />
-                                    </div>
-                                </GlassCard>
                             )}
                         </div>
                     </section>
@@ -659,6 +643,13 @@ export default function DashboardPage() {
                     </aside>
                 </div>
             </main>
+
+            {/* Add Repository Modal */}
+            <AddRepositoryModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={fetchRepos}
+            />
         </div>
     );
 }
