@@ -77,13 +77,11 @@ const Sidebar = ({ collapsed, setCollapsed, userName }: { collapsed: boolean; se
                 {[
                     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", active: true },
                     { icon: GitBranch, label: "Repositories", href: "/apis" },
-                    { icon: Play, label: "Playground", href: "/playground" },
-                    { icon: Activity, label: "Health", href: "/health" },
-                    { icon: Zap, label: "Performance", href: "/performance" },
-                    { icon: Network, label: "Dependencies", href: "/dependencies" },
-                    { icon: Shield, label: "Security", href: "/security" },
-                    { icon: Database, label: "Database", href: "/database" },
-                    { icon: Settings, label: "Settings", href: "/settings" },
+                    // Coming soon in future updates:
+                    // { icon: Play, label: "Playground", href: "/playground" },
+                    // { icon: Activity, label: "Health", href: "/health" },
+                    // { icon: Shield, label: "Security", href: "/security" },
+                    // { icon: Settings, label: "Settings", href: "/settings" },
                 ].map((item, idx) => (
                     <Link
                         key={idx}
@@ -514,13 +512,6 @@ export default function DashboardPage() {
                                             <p className="text-xs text-gray-400">{userEmail}</p>
                                         </div>
                                         <div className="p-2">
-                                            <button
-                                                onClick={() => window.location.href = '/settings'}
-                                                className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-white/10 rounded-lg transition-colors flex items-center gap-2"
-                                            >
-                                                <Settings size={14} />
-                                                Settings
-                                            </button>
                                             <button
                                                 onClick={() => {
                                                     // Redirect to logout page for proper cleanup
