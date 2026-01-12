@@ -180,6 +180,7 @@ router.get('/me', authenticateToken, async (req: Request, res: Response) => {
 
 router.get('/github/login', (req: Request, res: Response) => {
     const clientId = process.env.GITHUB_CLIENT_ID;
+    const fresh = req.query.fresh === 'true'; // Force fresh login
 
     if (!clientId) {
         return res.status(500).json({ error: 'GitHub OAuth not configured' });
@@ -191,15 +192,22 @@ router.get('/github/login', (req: Request, res: Response) => {
     // Generate a random state for CSRF protection
     const state = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
 
-    // Build GitHub auth URL with:
-    // - state: CSRF protection
-    // - allow_signup: allow new users
-    // - prompt: empty (GitHub doesn't support prompt=consent, but login hint helps)
-    // Note: Adding a timestamp forces GitHub to not use cached sessions
+    // Build GitHub auth URL
     const timestamp = Date.now();
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}&allow_signup=true&_t=${timestamp}`;
+    let githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}&allow_signup=true&_t=${timestamp}`;
+
+    // If fresh login requested, add login parameter to force account selection
+    if (fresh) {
+        // Adding empty login parameter hints GitHub to show login form instead of auto-auth
+        githubAuthUrl += '&login=';
+    }
 
     res.redirect(githubAuthUrl);
+});
+
+// Switch account endpoint - forces GitHub re-authentication
+router.get('/github/switch', (req: Request, res: Response) => {
+    res.redirect('/api/auth/github/login?fresh=true');
 });
 
 router.get('/github/callback', async (req: Request, res: Response) => {
