@@ -272,18 +272,17 @@ router.get('/github/callback', async (req: Request, res: Response) => {
                     avatarUrl: githubUser.avatar_url
                 });
             } else {
-                // Create new user
-                const emailDomain = primaryEmail.split('@')[1]?.toLowerCase() || 'github';
-                let organization = await OrgStore.findByName(`${emailDomain} Workspace`);
+                // Create new user with their own personal workspace
+                // Use GitHub username for unique org name (not email domain which would cause sharing)
+                const orgName = `${githubUser.login}'s Workspace`;
 
-                if (!organization) {
-                    organization = {
-                        id: uuidv4(),
-                        name: `${emailDomain} Workspace`,
-                        members: []
-                    };
-                    await OrgStore.create(organization);
-                }
+                // Always create a new org for new users (no sharing)
+                let organization: { id: string; name: string; members: string[] } = {
+                    id: uuidv4(),
+                    name: orgName,
+                    members: []
+                };
+                await OrgStore.create(organization);
 
                 user = {
                     id: uuidv4(),
