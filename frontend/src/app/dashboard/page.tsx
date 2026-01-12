@@ -523,8 +523,8 @@ export default function DashboardPage() {
                                             </button>
                                             <button
                                                 onClick={() => {
-                                                    localStorage.removeItem('token');
-                                                    window.location.href = '/';
+                                                    // Redirect to logout page for proper cleanup
+                                                    window.location.href = '/auth/logout';
                                                 }}
                                                 className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-2"
                                             >

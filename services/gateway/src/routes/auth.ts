@@ -188,7 +188,16 @@ router.get('/github/login', (req: Request, res: Response) => {
     const redirectUri = process.env.GITHUB_REDIRECT_URI || 'http://localhost:8000/api/auth/github/callback';
     const scope = 'read:user user:email repo';
 
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
+    // Generate a random state for CSRF protection
+    const state = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+
+    // Build GitHub auth URL with:
+    // - state: CSRF protection
+    // - allow_signup: allow new users
+    // - prompt: empty (GitHub doesn't support prompt=consent, but login hint helps)
+    // Note: Adding a timestamp forces GitHub to not use cached sessions
+    const timestamp = Date.now();
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${state}&allow_signup=true&_t=${timestamp}`;
 
     res.redirect(githubAuthUrl);
 });

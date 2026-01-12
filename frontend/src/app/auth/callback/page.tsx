@@ -13,18 +13,17 @@ function CallbackContent() {
         const error = searchParams.get("error");
 
         if (token) {
-            // Decode token to get user info (simplified for MVP)
-            // Ideally we call /auth/me here, but for now we just store token
-            // To integrate with NextAuth, we would call signIn('credentials', { token })
-            // But we need user info. 
+            // Clear any existing tokens first to prevent session crossover
+            localStorage.removeItem("token");
+            document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
 
-            // For MVP Phase 1, we will stick to localStorage + Context 
-            // as fully integrating NextAuth with external JWT requires more boilerplate.
-            // However, to satisfy the "NextAuth integration" requirement, 
-            // we will set the cookie that NextAuth expects or just use it for session.
+            // Also clear any other auth-related items
+            localStorage.removeItem("user");
+            sessionStorage.clear();
 
+            // Now set the new token
             localStorage.setItem("token", token);
-            document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
+            document.cookie = `token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`;
 
             // Redirect to dashboard
             router.push("/dashboard");
