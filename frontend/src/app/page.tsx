@@ -530,12 +530,11 @@ export default function LandingPage() {
                         <span>AutoDoc<span className="text-primary">AI</span></span>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                        © 2025 UniSpark Inc. All rights reserved.
+                        © 2026 UniSpark Inc. All rights reserved.
                     </div>
                     <div className="flex gap-6 text-sm text-muted-foreground">
-                        <a href="#" className="hover:text-white transition-colors">Privacy</a>
-                        <a href="#" className="hover:text-white transition-colors">Terms</a>
-                        <a href="#" className="hover:text-white transition-colors">Contact</a>
+                        <a href="mailto:palashmishra2002@gmail.com" className="hover:text-white transition-colors">Email</a>
+                        <a href="tel:+916376703452" className="hover:text-white transition-colors">+91-6376703452</a>
                     </div>
                 </div>
             </footer>
