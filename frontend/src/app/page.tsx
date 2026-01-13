@@ -302,7 +302,7 @@ export default function LandingPage() {
             </section>
 
             {/* How It Works Section */}
-            <section className="py-24 relative border-y border-white/5 bg-white/[0.02]">
+            <section id="how-it-works" className="py-24 relative border-y border-white/5 bg-white/[0.02]">
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl md:text-4xl font-bold mb-4">From Code to Docs in Seconds</h2>
@@ -510,11 +510,13 @@ export default function LandingPage() {
                         Connect your GitHub repository in 30 seconds and get beautiful,
                         auto-generated documentation. No credit card required.
                     </p>
-                    <Link href="/login">
-                        <MagneticButton className="px-8 py-4 text-lg shadow-[0_0_30px_rgba(0,113,227,0.3)]">
-                            Get Started Free <ArrowRight className="ml-2 w-5 h-5" />
-                        </MagneticButton>
-                    </Link>
+                    <div className="flex justify-center">
+                        <Link href="/login">
+                            <MagneticButton className="px-8 py-4 text-lg shadow-[0_0_30px_rgba(0,113,227,0.3)]">
+                                Get Started Free <ArrowRight className="ml-2 w-5 h-5" />
+                            </MagneticButton>
+                        </Link>
+                    </div>
                 </div>
             </section>
 
