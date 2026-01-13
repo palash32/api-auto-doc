@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, LogOut, RefreshCw } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
+import { clearAllAuthData } from "@/lib/auth-utils";
 
 /**
  * Logout page - clears all auth tokens and provides options
@@ -45,7 +46,7 @@ export default function LogoutPage() {
                 <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
                     <LogOut className="h-8 w-8 text-green-400" />
                 </div>
-                <h1 className="text-2xl font-bold">You've been logged out</h1>
+                <h1 className="text-2xl font-bold">You&apos;ve been logged out</h1>
                 <p className="text-gray-400">
                     Your session has been cleared from this app.
                 </p>
@@ -76,32 +77,4 @@ export default function LogoutPage() {
             </div>
         </div>
     );
-}
-
-/**
- * Utility function to clear all auth data
- * Can be imported and used elsewhere
- */
-export function clearAllAuthData() {
-    // Clear localStorage
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("github_token");
-
-    // Clear sessionStorage
-    sessionStorage.clear();
-
-    // Clear all auth cookies
-    const cookies = document.cookie.split(";");
-    cookies.forEach(cookie => {
-        const eqPos = cookie.indexOf("=");
-        const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
-        // Clear cookie by setting expiry to past
-        document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
-        document.cookie = `${name}=; path=/; domain=${window.location.hostname}; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
-    });
-
-    // Also try to clear next-auth session cookie if present
-    document.cookie = "next-auth.session-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "__Secure-next-auth.session-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure";
 }
