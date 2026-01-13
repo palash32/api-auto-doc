@@ -9,10 +9,15 @@ import { FeedbackButton } from "@/components/feedback-button";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "API Auto-Documentation Platform",
+    title: "AutoDocAI - API Auto-Documentation Platform",
     description: "Automatically discover, document, and monitor all APIs across your organization's codebase",
-    keywords: ["API", "documentation", "monitoring", "developer tools"],
-    authors: [{ name: "API Auto-Documentation Platform" }],
+    keywords: ["API", "documentation", "monitoring", "developer tools", "AutoDocAI"],
+    authors: [{ name: "UniSpark Inc" }],
+    icons: {
+        icon: "/logo.png",
+        shortcut: "/logo.png",
+        apple: "/logo.png",
+    },
 };
 
 export const viewport: Viewport = {

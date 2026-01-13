@@ -19,6 +19,7 @@ import { MagneticButton } from "@/components/ui/magnetic-button";
 import { GlassCard } from "@/components/ui/glass-card";
 import { GsapRegistry } from "@/lib/gsap-registry";
 import Link from "next/link";
+import Image from "next/image";
 
 // Register plugins
 gsap.registerPlugin(ScrollTrigger);
@@ -151,9 +152,13 @@ export default function LandingPage() {
             <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/60 backdrop-blur-xl">
                 <div className="container mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white">
-                            <Terminal size={18} />
-                        </div>
+                        <Image
+                            src="/logo.png"
+                            alt="AutoDocAI Logo"
+                            width={32}
+                            height={32}
+                            className="rounded-lg"
+                        />
                         <span>AutoDoc<span className="text-primary">AI</span></span>
                     </div>
                     <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
@@ -524,9 +529,13 @@ export default function LandingPage() {
             <footer className="py-12 border-t border-white/10 bg-black/40 backdrop-blur-xl">
                 <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-2 font-bold text-lg">
-                        <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white text-xs">
-                            <Terminal size={14} />
-                        </div>
+                        <Image
+                            src="/logo.png"
+                            alt="AutoDocAI Logo"
+                            width={24}
+                            height={24}
+                            className="rounded"
+                        />
                         <span>AutoDoc<span className="text-primary">AI</span></span>
                     </div>
                     <div className="text-sm text-muted-foreground">
