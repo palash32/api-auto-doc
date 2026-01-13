@@ -534,7 +534,15 @@ export default function LandingPage() {
                     </div>
                     <div className="flex gap-6 text-sm text-muted-foreground">
                         <a href="mailto:palashmishra2002@gmail.com" className="hover:text-white transition-colors">Email</a>
-                        <a href="tel:+916376703452" className="hover:text-white transition-colors">+91-6376703452</a>
+                        <button
+                            onClick={() => {
+                                navigator.clipboard.writeText('+91-6376703452');
+                                alert('Phone number copied!');
+                            }}
+                            className="hover:text-white transition-colors cursor-pointer"
+                        >
+                            +91-6376703452 📋
+                        </button>
                     </div>
                 </div>
             </footer>
